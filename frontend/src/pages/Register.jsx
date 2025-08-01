@@ -137,7 +137,7 @@ const RegisterContent = ({
 
                 <AlertDialogFooter>
                   <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={() => alert(otp)}>
+                  <AlertDialogAction onClick={() => navigate("/profile-uploader")}>
                     Verify & Continue
                   </AlertDialogAction>
                 </AlertDialogFooter>
