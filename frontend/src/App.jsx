@@ -5,6 +5,8 @@ import Layout from './Layout/layout';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import { ThemeProvider } from "@/components/theme-provider"
+import NotFoundPage from './pages/NotFoundPage';
+import {ProfileUploader} from "./pages/NewProfile"
 
 function App() {
   return (
@@ -14,6 +16,8 @@ function App() {
       <Route element={<Layout/>} path='/'>
         <Route element={<Login/>} path='/login'/>
         <Route element={<Register/>} path='/register'/>
+        <Route element={<ProfileUploader/>} path='/profile-uploader'/>
+        <Route element={<NotFoundPage/>} path='/*'/>
       </Route>
    </Routes>
     </ThemeProvider>
