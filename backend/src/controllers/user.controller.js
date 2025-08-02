@@ -231,3 +231,4 @@ export const resentOTP = async (req,res) => {
         
     }
 }
+

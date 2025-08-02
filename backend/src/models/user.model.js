@@ -13,6 +13,13 @@ const userSchema = new Schema({
         minlength: [3, 'Username must be at least 3 characters long'],
         maxlength: [20, 'Username must be at most 20 characters long']
     },
+    name:{
+        type: String,
+        default: "",
+        maxlength: [50, 'Name must be at most 50 characters long'],
+        trim: true
+
+    },
     email:{
         type: String,
         required: true,
@@ -61,6 +68,14 @@ const userSchema = new Schema({
 },{
     timestamps: true,
 })
+
+
+
+//indexing
+userSchema.index({ username: 1 });
+userSchema.index({ email: 1 });
+
+
 
 
 userSchema.pre("save",async function(next) {
