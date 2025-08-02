@@ -32,7 +32,7 @@ const userSchema = new Schema({
         minlength: [6, 'Password must be at least 6 characters long'],
         validate: {
             validator: function(v) {
-                return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{6,}$/.test(v);
+                return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{6,}$/.test(v);
             },
             message: props => 'Password must contain at least one uppercase letter, one lowercase letter, and one number.'
         },
