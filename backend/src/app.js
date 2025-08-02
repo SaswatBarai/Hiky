@@ -1,46 +1,34 @@
-import express from "express";
-import morgan from "morgan";
-import cors from "cors";
-import dotenv from "dotenv";
-import { rateLimit } from "express-rate-limit";
-import cookieParser from "cookie-parser";
-import helmet from "helmet";
+import express from 'express';
+import helmet from 'helmet';
+import cors from 'cors';
+import {rateLimit} from "express-rate-limit"
+import dotenv from 'dotenv';
 
-
-dotenv.config();
 
 const app = express();
-const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000,
-    max: 100,
-    message: "Too many requests, please try again later.",
-})
+dotenv.config();
 
-app.use(cors({
-    origin: process.env.CLIENT_URL,
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-}))
 
-app.use(morgan("dev"));
 app.use(helmet());
+app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser());
 app.use(limiter);
 
 
 
-import userRoutes from "./routes/user.route.js"
+// Rate limiting middleware
+const limiter = rateLimit({
+	windowMs: 15 * 60 * 1000, // 15 minutes
+	limit: 100, // Limit each IP to 100 requests per `window` (here, per 15 minutes).
+    message: "Too many requests, please try again later."
+})
 
 
 
-
-app.use("/api/user",userRoutes);
-
-
-
+app.get('/', (req, res) => {
+    res.send('Welcome to the API!');
+});
 
 
 
