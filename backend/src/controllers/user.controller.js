@@ -293,3 +293,138 @@ export const profileUploader = async (req, res) => {
     }
 }
 
+
+export const getUserData = async (req,res) => {
+    try {
+        const user = req.user;
+        if (!user) {
+            return res.status(401).json({
+                success: false,
+                message: "Unauthorized"
+            });
+        }
+
+        if(await redisClient.exists(`user:${user._id}`)) {
+           
+            const cachedUser = JSON.parse(await redisClient.get(`user:${user._id}`));
+            return res.status(200).json({
+                success: true,
+                message: "User data retrieved from cache",
+                user: cachedUser
+            });
+        }
+
+
+        const userData = await User.findById(user._id).select("-password -refreshToken");
+        if (!userData) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found"
+            });
+        }
+        await redisClient.set(`user:${user._id}`, JSON.stringify(userData), 'EX', 3600); // Cache user data for 1 hour  
+
+        return res.status(200).json({
+            success: true,
+            message: "User data retrieved successfully",
+            user: userData
+        })
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: "Internal Server Error"
+        });
+    }
+}
+
+
+export const login = async (req,res) => {
+    try {
+        const {mainInput, password} = req.body;
+        if([mainInput, password].includes(undefined)){
+            return res.status(400).json({
+                success: false,
+                message: "Please provide all required fields"
+            });
+        }
+
+        const user = await User.findOne({
+            $or:[
+                { username: mainInput },
+                { email: mainInput }
+            ]
+        }).select("+password +refreshToken");
+
+        if(!user){
+            return res.status(404).json({
+                success: false,
+                message: "Invalid credentials"
+            });
+        }
+
+        const isMatch = await user.comparePassword(password);
+        if(!isMatch){
+            return res.status(400).json({
+                success: false,
+                message: "Invalid credentials"
+            });
+        }
+
+        const accessToken = await user.generateAccessToken();
+        const refreshToken = await user.generateRefreshToken();
+        user.refreshToken = refreshToken;
+        await user.save();
+
+
+        const loggedInUser = await User.findById(user._id).select("-password -refreshToken");
+
+        return res.cookie("refreshToken",refreshToken,{
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "lax",
+            maxAge: 7 * 24 * 60 * 60 * 1000 
+            
+        }).status(200).json({
+            success: true,
+            message: "User logged in successfully",
+            user: loggedInUser,
+            accessToken 
+        })
+    } catch (error) {
+        console.error("Error in login:", error);
+        return res.status(500).json({
+            success: false,
+            message: "Internal Server Error"
+        });
+    }
+}
+
+
+export const logout = async (req,res) => {
+
+    console.log("mark 1")
+    try {
+        if(!req.user) {
+            return res.status(401).json({
+                success: false,
+                message: "Unauthorized"
+            });
+        }
+
+        const user = req.user;
+        user.refreshToken = "";
+        await user.save();
+        await redisClient.del(`user:${user._id}`);
+
+        return res.clearCookie("refreshToken").status(200).json({
+            success: true,
+            message: "User logged out successfully"
+        });
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: "Internal Server Error"
+        });
+    }
+}
+
