@@ -3,6 +3,7 @@ import helmet from 'helmet';
 import cors from 'cors';
 import {rateLimit} from "express-rate-limit"
 import morgan from "morgan"
+import cookieParser from "cookie-parser";
 
 
 
@@ -10,13 +11,19 @@ const app = express();
 
 
 app.use(helmet());
-app.use(cors());
+app.use(cors(
+    {
+        origin: "http://localhost:5173",
+        credentials: true
+    }
+));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan("dev"));
 app.use(helmet({
     contentSecurityPolicy: false, // Disable CSP for simplicity, adjust as needed
 }));
+app.use(cookieParser());
 
 
 

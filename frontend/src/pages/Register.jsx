@@ -15,7 +15,12 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { OTPInputBox, OTPProvider, useOtp} from "../components/inputotp1";
+import { OTPInputBox, OTPProvider, useOtp } from "../components/inputotp1";
+import { useRef } from "react";
+import { registerSchema } from "../validation/auth.validation";
+import { useNotification } from "../hooks/useNotification";
+import { useRegister } from "../utils/queries";
+import Cookie from "js-cookie"
 
 const Register = ({
   heading = "Create Account",
@@ -28,7 +33,7 @@ const Register = ({
 
   return (
     <OTPProvider>
-      <RegisterContent 
+      <RegisterContent
         heading={heading}
         buttonText={buttonText}
         loginText={loginText}
@@ -42,18 +47,79 @@ const Register = ({
   );
 };
 
-const RegisterContent = ({ 
-  heading, 
-  buttonText, 
-  loginText, 
-  navigate, 
-  showPassword, 
-  setShowPassword, 
-  showConfirmPassword, 
-  setShowConfirmPassword 
+const RegisterContent = ({
+  heading,
+  buttonText,
+  loginText,
+  navigate,
+  showPassword,
+  setShowPassword,
+  showConfirmPassword,
+  setShowConfirmPassword,
 }) => {
   const { otp, setOtp } = useOtp();
-  
+  const notify = useNotification();
+  const registerMutation = useRegister();
+  const otpInput = useRef(null);
+  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+
+  const handleRegister = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    // Create a plain object for validation
+    const formData = {
+      username,
+      email,
+      password,
+      confirmPassword,
+    };
+
+    // Validate the data
+    try {
+      const { error } = await registerSchema.validateAsync(formData, {
+        abortEarly: false, // Collect all errors
+      });
+      if (error) {
+        throw error;
+      }
+    } catch (error) {
+      console.error("Validation errors:", error.details);
+      const errorMessages = error.details.map((detail) => detail.message);
+      errorMessages.forEach((msg) => {
+        notify.notify(msg, "top-center", "error");
+      });
+      
+    }
+
+    registerMutation.mutate(
+      { username, email, password },
+      {
+        onSuccess: (data) => {
+          if(data?.success){
+            localStorage.setItem("accessToken", data.accessToken);
+            Cookie.set("accessToken",data.accessToken,{
+              expires:1,// 1 day expiration
+              secure: true, // Use secure cookies in production
+              sameSite:"Lax",
+              
+            })
+            otpInput.current.click(); 
+            
+          }
+        },
+        onError: (error) => {
+          console.error("Registration error:", error.response.data);
+          notify.notify(error.response.data.message, "top-center", "error");
+        }
+      }
+    )
+
+
+  };
 
   return (
     <section className="bg-muted h-screen">
@@ -66,18 +132,23 @@ const RegisterContent = ({
       <div className="flex h-full items-center justify-center">
         {/* Registration Form */}
         <div className="flex flex-col items-center gap-6 lg:justify-start">
-          <div className="min-w-sm border-muted bg-background flex w-full max-w-sm flex-col items-center gap-y-4 rounded-md border px-6 py-8 shadow-md">
+          <form className="min-w-sm border-muted bg-background flex w-full max-w-sm flex-col items-center gap-y-4 rounded-md border px-6 py-8 shadow-md">
             {heading && <h1 className="text-xl font-semibold">{heading}</h1>}
+
             <Input
               type="text"
               placeholder="Username"
               className="text-sm"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
               required
             />
             <Input
               type="email"
               placeholder="Email"
               className="text-sm"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               required
             />
 
@@ -87,6 +158,8 @@ const RegisterContent = ({
                 type={showPassword ? "text" : "password"}
                 placeholder="Password"
                 className="text-sm pr-10"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 required
               />
               <button
@@ -104,6 +177,8 @@ const RegisterContent = ({
                 type={showConfirmPassword ? "text" : "password"}
                 placeholder="Confirm Password"
                 className="text-sm pr-10"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
                 required
               />
               <button
@@ -114,36 +189,41 @@ const RegisterContent = ({
                 {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
             </div>
+            <Button type="submit" onClick={handleRegister} className="w-full">
+              {buttonText}
+            </Button>
 
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button type="submit" 
-                onClick ={() => setOtp("")}
-                className="w-full">
-                  {buttonText}
-                </Button>
+                <button ref={otpInput} className="hidden">
+                  hello
+                </button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
                   <AlertDialogTitle>Verify Your Email</AlertDialogTitle>
                   <AlertDialogDescription>
-                    We've sent a verification code to your email address. Please enter the code below to complete your registration.
+                    We've sent a verification code to your email address. Please
+                    enter the code below to complete your registration.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
-                
+
                 <div className="py-4">
-                  <OTPInputBox/>
+                  <OTPInputBox />
                 </div>
 
                 <AlertDialogFooter>
                   <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={() => navigate("/profile-uploader")}>
+                  <AlertDialogAction
+                    onClick={() => navigate("/profile-uploader")}
+                  >
                     Verify & Continue
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
-          </div>
+          </form>
+
           <div className="text-muted-foreground flex justify-center gap-1 text-sm">
             <p>{loginText}</p>
             <Link

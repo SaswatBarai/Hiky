@@ -12,6 +12,7 @@ const Login = ({
 }) => {
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
+  
   return (
     <section className="bg-muted h-screen ">
         <div onClick={() => navigate("/")} className="fixed left-2 top-4 cursor-pointer z-10">
