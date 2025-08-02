@@ -15,7 +15,7 @@ export const register = async (req,res) => {
                 }
             );
         }
-
+        
         const existingUsername = await User.findOne({
             username: username
         })
@@ -44,40 +44,46 @@ export const register = async (req,res) => {
 
         const accessToken = user.generateAccessToken();
         const refreshToken = user.generateRefreshToken();
-
+        
         user.refreshToken = refreshToken;
         await user.save();
-
+        
         const loggedInUser = await User.findById(user._id).select("-password -refreshToken");
-
-
-
+        
+        
+        
         //Genrate otp 
         const otp = Math.floor(100000 + Math.random() * 900000); 
         
-
+        
         //cache the otp in redis'
 
         await redisClient.set(`otp:${email}`, otp, 'EX', 300);
+        
+        
 
-
-
-
+        
         //To cool down otp request for 60s means next otp will called after 60s
-
+        
         await redisClient.set(`otp_limit:${email}`, 'sent', 'EX', 60);
-
-
+        
+        
         //sending mail
         const result = await sendMail(email, "Verify Your Email", otp);
-
-
+        
+        if (!result.success) {
+            return res.status(500).json({
+                success: false,
+                message: "Failed to send OTP email"
+            });
+        }
+        
         return res.status(201).cookie("refreshToken", refreshToken,{
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
             sameSite: "lax",
             maxAge: 7 * 24 * 60 * 60 * 1000 
-
+            
         }).json({
             success: true,
             message: "User registered successfully",
@@ -141,7 +147,7 @@ export const verifyEmail = async (req,res) => {
         await redisClient.del(`otp:${email}`);
         await redisClient.del(`otp_limit:${email}`); // Clear the cooldown for OTP requests
 
-        
+
         return res.status(200).json({
             success: true,
             message: "Email verified successfully",
@@ -154,5 +160,74 @@ export const verifyEmail = async (req,res) => {
             success: false,
             message: error.message
         });
+    }
+}
+
+
+export const resentOTP = async (req,res) => {
+    try {
+        const {email} = req.body;
+        if(!email){
+            return res.status(400).json({   
+                success: false,
+                message: "Please provide an email address"
+            });
+        }
+        // Check if the user exists
+        const user = await User.findOne({email});
+        if(!user) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found"
+            })
+        }
+
+        if(user.isEmailVerified) {
+            return res.status(400).json({
+                success: false,
+                message: "Email is already verified"
+            });
+        }
+
+        const ratedLimited = await redisClient.get(`otp_limit:${email}`);
+        if(ratedLimited){
+            return res.status(429).json({
+                success: false,
+                message: "Please wait before requesting a new OTP"
+            })
+        }
+
+        let otp = await redisClient.get(`otp:${email}`);
+        if(!otp){
+            otp = Math.floor(100000 + Math.random() * 900000); // Generate a new OTP
+            await redisClient.set(`otp_limit:${email}`, 'sent', 'EX', 60); // Set cooldown for OTP requests\
+        }
+        await redisClient.set(`otp:${email}`, otp, 'EX', 300); // Store OTP in Redis for 5 minutes
+
+        // Send the OTP via email
+        const result = await sendMail(email, "Verify Your Email", otp);
+
+
+        if (!result.success) {
+            return res.status(500).json({
+                success: false,
+                message: "Failed to send OTP email"
+            });
+        }
+        
+        return res.status(200).json({
+            success: true,
+            message: "OTP resent successfully"
+        });
+
+
+
+    } catch (error) {
+        
+        return res.status(500).json({
+            success: false,
+            message: "Internal Server Error"
+        });
+        
     }
 }
