@@ -71,9 +71,6 @@ const userSchema = new Schema({
 
 
 
-//indexing
-userSchema.index({ username: 1 });
-userSchema.index({ email: 1 });
 
 
 

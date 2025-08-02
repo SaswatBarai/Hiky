@@ -1,6 +1,7 @@
 import User from "../models/user.model.js"
 import {redisClient} from "../config/connectRedis.js";
 import sendMail from "../services/sendMail.js"
+import {uploadImage} from "../services/cloudinary.js"
 
 
 export const register = async (req,res) => {
@@ -228,6 +229,66 @@ export const resentOTP = async (req,res) => {
             success: false,
             message: "Internal Server Error"
         });
+        
+    }
+}
+
+
+
+export const profileUploader = async (req, res) => {
+    try {
+        const {name} = req.body;
+        const path = req.file ? req.file.path : null;
+
+        if (!path) {
+            return res.status(400).json({
+                success: false,
+                message: "Please upload a profile picture"
+            });
+        }
+
+        if (!name) {
+            return res.status(400).json({
+                success: false,
+                message: "Please provide a name"
+            });
+        }
+
+        const user = req.user; 
+
+        console.log(user)
+        if (!user) {
+            return res.status(401).json({
+                success: false,
+                message: "Unauthorized"
+            });
+        }
+
+        
+        const result = await uploadImage(path);
+
+        if (!result) {
+            return res.status(500).json({
+                success: false,
+                message: "Failed to upload image"
+            });
+        }
+
+        await User.findByIdAndUpdate(user._id,{
+            profileImage: {
+                image: result.secure_url,
+                publicId: result.public_id
+            },
+            name: name
+        }, { new: true }).select("-password -refreshToken");
+
+        return res.status(200).json({
+            success: true,
+            message: "Profile picture uploaded successfully",
+        });
+
+        
+    } catch (error) {
         
     }
 }
