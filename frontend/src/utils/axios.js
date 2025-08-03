@@ -61,3 +61,23 @@ export const getUser = async () => {
     throw error;
   }
 }
+
+
+export const verifyEmail = async (formData) => {
+  try {
+    const res = await axiosInstance.post(
+      `/users/verify-email`,
+      formData,
+      {
+        headers:{
+          'Content-Type': 'application/json',
+        },
+        withCredentials: true
+      }
+    )
+
+    return res.data;
+  } catch (error) {
+    throw error;
+  }
+}

@@ -1,7 +1,8 @@
 import {useMutation,useQuery} from "@tanstack/react-query";
 import {
     register,
-    getUser
+    getUser,
+    verifyEmail
 } from "../utils/axios.js";
 
 
@@ -20,5 +21,12 @@ export const useGetUser = () => {
         staleTime: 1000 * 60 * 5, 
         gcTime: 1000 * 60 * 10, 
         
+    })
+}
+
+
+export const useVerifyEmail = () => {
+    return useMutation({
+        mutationFn:verifyEmail,
     })
 }

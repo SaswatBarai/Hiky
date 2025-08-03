@@ -1,7 +1,7 @@
 import { Input } from "@/components/ui/input";
 import { Link, useNavigate } from "react-router-dom";
 import { Eye, EyeOff } from "lucide-react";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Home } from "@mynaui/icons-react";
 import {
   AlertDialog,
@@ -16,11 +16,14 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { OTPInputBox, OTPProvider, useOtp } from "../components/inputotp1";
-import { useRef } from "react";
 import { registerSchema } from "../validation/auth.validation";
 import { useNotification } from "../hooks/useNotification";
-import { useRegister } from "../utils/queries";
-import Cookie from "js-cookie"
+import { useRegister, useVerifyEmail } from "../utils/queries";
+import Cookie from "js-cookie";
+import { useDispatch } from "react-redux";
+import {setUser} from "../state/authSlice"
+import { Spinner } from "@mynaui/icons-react";
+
 
 const Register = ({
   heading = "Create Account",
@@ -59,17 +62,43 @@ const RegisterContent = ({
 }) => {
   const { otp, setOtp } = useOtp();
   const notify = useNotification();
+  const dispatch = useDispatch();
   const registerMutation = useRegister();
+  const verifyEmailMutation = useVerifyEmail();
   const otpInput = useRef(null);
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [isMainLoading, setIsMainLoading] = useState(false);
+  const [isOtpLoading, setIsOtpLoading] = useState(false);
+  const [isResendLoading, setIsResendLoading] = useState(false);
+  const [resendTimer, setResendTimer] = useState(0);
 
+  // Resend timer effect
+  useEffect(() => {
+    let timer;
+    if (resendTimer > 0) {
+      timer = setTimeout(() => setResendTimer(resendTimer - 1), 1000);
+    }
+    return () => clearTimeout(timer);
+  }, [resendTimer]);
+
+  const handleResendOTP = async () => {
+    if (resendTimer > 0) return;
+    
+  };
+
+
+
+
+
+  
   const handleRegister = async (e) => {
     e.preventDefault();
     e.stopPropagation();
-
+    
+    setIsMainLoading(true);
     // Create a plain object for validation
     const formData = {
       username,
@@ -92,35 +121,83 @@ const RegisterContent = ({
       errorMessages.forEach((msg) => {
         notify.notify(msg, "top-center", "error");
       });
-     return; 
-      
+      setIsMainLoading(false);
+      return;
     }
-
     registerMutation.mutate(
       { username, email, password },
       {
         onSuccess: (data) => {
-          if(data?.success){
+          if (data?.success) {
             localStorage.setItem("accessToken", data.accessToken);
-            Cookie.set("accessToken",data.accessToken,{
-              expires:1,// 1 day expiration
+            Cookie.set("accessToken", data.accessToken, {
+              expires: 1, // 1 day expiration
               secure: true, // Use secure cookies in production
-              sameSite:"Lax",
-              
-            })
+              sameSite: "Lax",
+            });
+
+            if(data?.user){
+              dispatch(setUser(data?.user));
+            }
+            setIsMainLoading(false);
             setOtp("");
-            otpInput.current.click(); 
+            setResendTimer(60); // Start 60 second timer
+            otpInput.current.click();
           }
         },
         onError: (error) => {
           console.error("Registration error:", error.response.data);
           notify.notify(error.response.data.message, "top-center", "error");
           return;
+        },
+      }
+    );
+  };
+
+  const handleOTPSubmit = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsOtpLoading(true);
+    if (!otp || otp.length < 6) {
+      notify.notify("Please enter a valid OTP", "top-center", "warning");
+      setIsOtpLoading(false);
+      setOtp("");
+      return;
+    }
+
+    // const user = useSelector((state) => state.auth.user);
+    // const storeEmail = user?.email;
+    // //testing email
+    // const emailRegex = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;
+    // if (!emailRegex.test(storeEmail)) {
+    //   notify.notify(
+    //     "Please enter a valid email address",
+    //     "top-center",
+    //     "warning"
+    //   );
+    //   return;
+    // }
+    // Here you would typically send the OTP to your backend for verification
+    verifyEmailMutation.mutate(
+      { email, otp },
+      {
+        onSettled: (data) =>{
+          console.log(data)
+          if(data?.success){
+            dispatch(setUser(data?.user));
+            setIsOtpLoading(false);
+            navigate("/profile-uploader")
+            notify.notify("Email verified successfully", "top-center", "success");
+          }
+        },
+        onError : (error) => {
+          notify.notify(error.response.data.message, "top-center", "error");
+          setIsOtpLoading(false);
+          console.error(error.response.data.message);
+          
         }
       }
-    )
-
-
+    );
   };
 
   return (
@@ -191,8 +268,15 @@ const RegisterContent = ({
                 {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
             </div>
-            <Button type="submit" onClick={handleRegister} className="w-full">
-              {buttonText}
+
+            <Button type="submit" onClick={handleRegister} disabled = {isMainLoading}  className="w-full">
+              {
+                isMainLoading ? (
+                  <Spinner className="animate-spin" size={16} />
+                ) : (
+                  buttonText
+                )
+              }
             </Button>
 
             <AlertDialog>
@@ -205,21 +289,54 @@ const RegisterContent = ({
                 <AlertDialogHeader>
                   <AlertDialogTitle>Verify Your Email</AlertDialogTitle>
                   <AlertDialogDescription>
-                    We've sent a verification code to your email address. Please
-                    enter the code below to complete your registration.
+                    We've sent a verification code to <strong>{email}</strong>. Please
+                    enter the 6-digit code below to complete your registration.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
 
-                <div className="py-4">
+                <div className="py-4 space-y-4">
                   <OTPInputBox />
+                  
+                  {/* Resend OTP Section */}
+                  <div className="flex flex-col items-center gap-2 pt-2">
+                    <p className="text-sm text-muted-foreground">
+                      Didn't receive the code?
+                    </p>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleResendOTP}
+                      disabled={resendTimer > 0 || isResendLoading}
+                      className="text-primary hover:text-primary/80 p-0 h-auto font-medium"
+                    >
+                      {isResendLoading ? (
+                        <div className="flex items-center gap-2">
+                          <Spinner className="animate-spin" size={14} />
+                          Sending...
+                        </div>
+                      ) : resendTimer > 0 ? (
+                        `Resend OTP in ${resendTimer}s`
+                      ) : (
+                        "Resend OTP"
+                      )}
+                    </Button>
+                  </div>
                 </div>
 
                 <AlertDialogFooter>
                   <AlertDialogCancel>Cancel</AlertDialogCancel>
                   <AlertDialogAction
-                    onClick={() => navigate("/profile-uploader")}
+                    onClick={(e) => {
+                      handleOTPSubmit(e)
+                    }}
                   >
-                    Verify & Continue
+                    {
+                      isOtpLoading ? (
+                        <Spinner className="animate-spin" size={16} />
+                      ) : (
+                        "Verify & Continue"
+                      )
+                    }
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
