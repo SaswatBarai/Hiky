@@ -8,7 +8,7 @@ export const register = async (req,res) => {
     try{
         const {username,email,password} = req.body;
 
-        if([!username, !email, !password].includes(undefined)){
+        if(!username || !email || !password){
             return res.status(400).json(
                 {
                     success: false,
@@ -106,7 +106,7 @@ export const register = async (req,res) => {
 export const verifyEmail = async (req,res) => {
     try {
         const {email ,otp} = req.body;
-        if([email, otp].includes(undefined)){
+        if(!email || !otp){
             return res.status(400).json({
                 success: false,
                 message: "Please provide all required fields"
@@ -241,7 +241,7 @@ export const profileUploader = async (req, res) => {
         console.log(name, about);
         const path = req.file ? req.file.path : null;
 
-        if([name, about].includes(undefined)){
+        if(!name || !about){
             return res.status(400).json({
                 success: false,
                 message: "Please provide all required fields"
@@ -348,7 +348,7 @@ export const getUserData = async (req,res) => {
 export const login = async (req,res) => {
     try {
         const {mainInput, password} = req.body;
-        if([mainInput, password].includes(undefined)){
+        if(!mainInput || !password){
             return res.status(400).json({
                 success: false,
                 message: "Please provide all required fields"

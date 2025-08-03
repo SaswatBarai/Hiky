@@ -10,22 +10,25 @@ function Layout() {
   return (
     <div>
         <div className={cn(
-            'fixed left-2 bottom-4 transition delay-100 cursor-pointer',
-            isDark && "rotate-180",
-            !isDark && "rotate-0"
+            'fixed left-4 bottom-6 transition-all duration-300 cursor-pointer z-50 group',
+            'hover:scale-110'
         )}>
-            {
-                isDark ? 
-                (
-                    <>
-                        <Sun color='yellow' onClick={() => setTheme("light")}/>
-                    </>
-                ):(
-                    <>
-                    <Moon onClick={() => setTheme("dark")} />
-                
-                </>)
-            }
+            <div className="p-3 rounded-full bg-background/80 backdrop-blur-sm shadow-lg border border-border/50 hover:shadow-xl transition-all duration-200">
+                {
+                    isDark ? 
+                    (
+                        <Sun 
+                            className="w-5 h-5 text-yellow-500 transition-all duration-300 group-hover:rotate-45" 
+                            onClick={() => setTheme("light")}
+                        />
+                    ):(
+                        <Moon 
+                            className="w-5 h-5 text-blue-600 transition-all duration-300 group-hover:-rotate-45" 
+                            onClick={() => setTheme("dark")} 
+                        />
+                    )
+                }
+            </div>
         </div>
         <Outlet/>
     </div>

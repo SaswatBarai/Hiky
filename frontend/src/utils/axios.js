@@ -123,3 +123,23 @@ export const profileUploader = async (formData) => {
     throw error;
   }
 }
+
+
+export const login  = async(formData) => {
+  try {
+    const res = await axiosInstance.post(
+      `/users/login`,
+      formData,
+      {
+        headers:{
+          'Content-Type': 'application/json',
+        },
+        withCredentials: true
+      }
+    )
+    return res.data;
+    
+  } catch (error) {
+    throw error;
+  }
+}

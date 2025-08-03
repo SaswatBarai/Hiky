@@ -33,3 +33,17 @@ export const newProfileSchema = joi.object({
         "any.required": "About is required."
     })
 })
+
+
+//for login user can submit either email or username
+export const loginSchema = joi.object({
+    emailOrUsername: joi.string().trim().required().messages({
+        "string.empty": "Email or Username is required.",
+        "any.required": "Email or Username is required."
+    }),
+    password: joi.string().trim().min(6).required().messages({
+        "string.min": "Password must be at least 6 characters long.",
+        "string.empty": "Password is required.",
+        "any.required": "Password is required."
+    })
+});

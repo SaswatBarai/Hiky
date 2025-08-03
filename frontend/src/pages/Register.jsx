@@ -220,82 +220,105 @@ const RegisterContent = ({
   };
 
   return (
-    <section className="bg-muted h-screen">
+    <section className="bg-gradient-to-br from-muted via-muted to-muted/50 h-screen relative overflow-hidden">
+      {/* Decorative background elements */}
+      <div className="absolute inset-0 opacity-10">
+        <div className="w-full h-full bg-[radial-gradient(circle_at_20%_80%,rgba(120,119,198,0.05),transparent_50%),radial-gradient(circle_at_80%_20%,rgba(255,119,198,0.05),transparent_50%),radial-gradient(circle_at_40%_40%,rgba(120,219,226,0.05),transparent_50%)]"></div>
+      </div>
+
       <div
         onClick={() => navigate("/")}
-        className="fixed left-2 top-4 cursor-pointer z-10"
+        className="fixed left-4 top-6 cursor-pointer z-10 transition-all duration-200 hover:scale-110"
       >
-        <Home className="w-6 h-6 text-foreground hover:text-primary" />
+        <div className="p-2 rounded-full bg-background/80 backdrop-blur-sm shadow-lg border border-border/50 hover:shadow-xl">
+          <Home className="w-5 h-5 text-foreground hover:text-primary transition-colors duration-200" />
+        </div>
       </div>
-      <div className="flex h-full items-center justify-center">
+      
+      <div className="flex h-full items-center justify-center p-4">
         {/* Registration Form */}
-        <div className="flex flex-col items-center gap-6 lg:justify-start">
-          <form className="min-w-sm border-muted bg-background flex w-full max-w-sm flex-col items-center gap-y-4 rounded-md border px-6 py-8 shadow-md">
-            {heading && <h1 className="text-xl font-semibold">{heading}</h1>}
-
-            <Input
-              type="text"
-              placeholder="Username"
-              className="text-sm"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              required
-            />
-            <Input
-              type="email"
-              placeholder="Email"
-              className="text-sm"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-
-            {/* Password field with eye toggle */}
-            <div className="relative w-full">
-              <Input
-                type={showPassword ? "text" : "password"}
-                placeholder="Password"
-                className="text-sm pr-10"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
-              >
-                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-              </button>
+        <div className="flex flex-col items-center gap-8 lg:justify-start">
+          <form className="min-w-sm border-border/50 bg-background/95 backdrop-blur-sm flex w-full max-w-sm flex-col items-center gap-y-6 rounded-xl border px-8 py-10 shadow-2xl hover:shadow-3xl transition-all duration-300">
+            
+            {/* Enhanced header */}
+            <div className="text-center space-y-2 mb-2">
+              {heading && <h1 className="text-2xl font-bold bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent">{heading}</h1>}
+              <p className="text-sm text-muted-foreground">Join us today! Create your account to get started</p>
             </div>
 
-            {/* Confirm Password field with eye toggle */}
-            <div className="relative w-full">
+            {/* Enhanced input styling */}
+            <div className="w-full space-y-4">
               <Input
-                type={showConfirmPassword ? "text" : "password"}
-                placeholder="Confirm Password"
-                className="text-sm pr-10"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
+                type="text"
+                placeholder="Username"
+                className="text-sm h-11 px-4 rounded-lg border-border/60 focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all duration-200"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
                 required
               />
-              <button
-                type="button"
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
-              >
-                {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-              </button>
+              <Input
+                type="email"
+                placeholder="Email"
+                className="text-sm h-11 px-4 rounded-lg border-border/60 focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all duration-200"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+
+              {/* Enhanced password field with eye toggle */}
+              <div className="relative">
+                <Input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Password"
+                  className="text-sm h-11 px-4 pr-12 rounded-lg border-border/60 focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all duration-200"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors duration-200 p-1 rounded-md hover:bg-muted/50"
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+
+              {/* Enhanced confirm password field with eye toggle */}
+              <div className="relative">
+                <Input
+                  type={showConfirmPassword ? "text" : "password"}
+                  placeholder="Confirm Password"
+                  className="text-sm h-11 px-4 pr-12 rounded-lg border-border/60 focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all duration-200"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors duration-200 p-1 rounded-md hover:bg-muted/50"
+                >
+                  {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
             </div>
 
-            <Button type="submit" onClick={handleRegister} disabled = {isMainLoading}  className="w-full">
-              {
-                isMainLoading ? (
+            {/* Enhanced button styling */}
+            <Button 
+              type="submit" 
+              onClick={handleRegister} 
+              disabled={isMainLoading}  
+              className="w-full h-11 rounded-lg font-medium bg-primary hover:bg-primary/90 shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5"
+            >
+              {isMainLoading ? (
+                <div className="flex items-center gap-2">
                   <Spinner className="animate-spin" size={16} />
-                ) : (
-                  buttonText
-                )
-              }
+                  Creating account...
+                </div>
+              ) : (
+                buttonText
+              )}
             </Button>
 
             <AlertDialog>
@@ -304,20 +327,20 @@ const RegisterContent = ({
                   hello
                 </button>
               </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Verify Your Email</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    We've sent a verification code to <strong>{email}</strong>. Please
+              <AlertDialogContent className="max-w-md rounded-xl border-border/50 bg-background/95 backdrop-blur-sm">
+                <AlertDialogHeader className="space-y-3">
+                  <AlertDialogTitle className="text-xl font-bold text-center">Verify Your Email</AlertDialogTitle>
+                  <AlertDialogDescription className="text-center text-muted-foreground">
+                    We've sent a verification code to <strong className="text-foreground">{email}</strong>. Please
                     enter the 6-digit code below to complete your registration.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
 
-                <div className="py-4 space-y-4">
+                <div className="py-6 space-y-6">
                   <OTPInputBox />
                   
-                  {/* Resend OTP Section */}
-                  <div className="flex flex-col items-center gap-2 pt-2">
+                  {/* Enhanced resend OTP Section */}
+                  <div className="flex flex-col items-center gap-3 pt-2">
                     <p className="text-sm text-muted-foreground">
                       Didn't receive the code?
                     </p>
@@ -326,7 +349,7 @@ const RegisterContent = ({
                       size="sm"
                       onClick={handleResendOTP}
                       disabled={resendTimer > 0 || isResendLoading}
-                      className="text-primary hover:text-primary/80 p-0 h-auto font-medium"
+                      className="text-primary hover:text-primary/80 hover:bg-primary/10 p-2 h-auto font-medium rounded-lg transition-all duration-200"
                     >
                       {isResendLoading ? (
                         <div className="flex items-center gap-2">
@@ -342,31 +365,34 @@ const RegisterContent = ({
                   </div>
                 </div>
 
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogFooter className="gap-3">
+                  <AlertDialogCancel className="rounded-lg">Cancel</AlertDialogCancel>
                   <AlertDialogAction
                     onClick={(e) => {
                       handleOTPSubmit(e)
                     }}
+                    className="rounded-lg bg-primary hover:bg-primary/90"
                   >
-                    {
-                      isOtpLoading ? (
+                    {isOtpLoading ? (
+                      <div className="flex items-center gap-2">
                         <Spinner className="animate-spin" size={16} />
-                      ) : (
-                        "Verify & Continue"
-                      )
-                    }
+                        Verifying...
+                      </div>
+                    ) : (
+                      "Verify & Continue"
+                    )}
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
           </form>
 
-          <div className="text-muted-foreground flex justify-center gap-1 text-sm">
+          {/* Enhanced link styling */}
+          <div className="text-muted-foreground flex justify-center gap-1 text-sm bg-background/60 backdrop-blur-sm px-4 py-2 rounded-full border border-border/30">
             <p>{loginText}</p>
             <Link
               to={"/login"}
-              className="text-primary font-medium hover:underline"
+              className="text-primary font-medium hover:underline transition-all duration-200 hover:text-primary/80"
             >
               Sign in
             </Link>
