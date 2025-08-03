@@ -22,12 +22,14 @@ export const registerSchema = joi.object({
 
 
 export const newProfileSchema = joi.object({
-    name: joi.string().trim().max(50).messages({
+    fullName: joi.string().trim().min(1).max(50).required().messages({
         "string.max": "Name must be at most 50 characters long.",
-        "string.empty": "Name is required." 
+        "string.empty": "Name is required.",
+        "any.required": "Name is required."
     }),
-    about: joi.string().trim().max(200).messages({
+    about: joi.string().trim().min(1).max(200).required().messages({
         "string.max": "About must be at most 200 characters long.",
-        "string.empty": "About is required."
+        "string.empty": "About is required.",
+        "any.required": "About is required."
     })
 })

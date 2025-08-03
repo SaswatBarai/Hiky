@@ -237,20 +237,21 @@ export const resentOTP = async (req,res) => {
 
 export const profileUploader = async (req, res) => {
     try {
-        const {name} = req.body;
+        const {name,about} = req.body;
+        console.log(name, about);
         const path = req.file ? req.file.path : null;
+
+        if([name, about].includes(undefined)){
+            return res.status(400).json({
+                success: false,
+                message: "Please provide all required fields"
+            });
+        }
 
         if (!path) {
             return res.status(400).json({
                 success: false,
                 message: "Please upload a profile picture"
-            });
-        }
-
-        if (!name) {
-            return res.status(400).json({
-                success: false,
-                message: "Please provide a name"
             });
         }
 
@@ -279,17 +280,23 @@ export const profileUploader = async (req, res) => {
                 image: result.secure_url,
                 publicId: result.public_id
             },
-            name: name
+            name: name,
+            about: about
         }, { new: true }).select("-password -refreshToken");
 
+        const loggedInUser = await User.findById(user._id).select("-password -refreshToken");
         return res.status(200).json({
             success: true,
             message: "Profile picture uploaded successfully",
+            user: loggedInUser
         });
 
         
     } catch (error) {
-        
+        return res.status(500).json({
+            success: false,
+            message: "Internal Server Error"
+        })
     }
 }
 

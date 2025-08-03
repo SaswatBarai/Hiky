@@ -14,7 +14,8 @@ import { Button } from "@/components/ui/button";
 import { CameraIcon } from "@radix-ui/react-icons";
 import { newProfileSchema } from "../validation/auth.validation";
 import { useProfileUploader } from "../utils/queries";
-import { error } from "console";
+import { useNotification } from "../hooks/useNotification";
+import { Spinner } from "@mynaui/icons-react";
 
 export const ProfileUploader = () => {
   // State to hold the selected image file and its preview URL.
@@ -26,8 +27,9 @@ export const ProfileUploader = () => {
     about: "",
   });
 
-  const [isLoading, setIsLoading] = useState(false);
+  const [isMainLoading, setIsMainLoading] = useState(false);
   const profileUploaderMutation = useProfileUploader();
+  const notify = useNotification();
 
   const fileInputRef = useRef(null);
 
@@ -45,6 +47,20 @@ export const ProfileUploader = () => {
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
+      // Validate file type
+      const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+      if (!validTypes.includes(file.type)) {
+        notify.notify("Please select a valid image file (JPEG, PNG, or WebP)", "top-center", "error");
+        return;
+      }
+
+      // Validate file size (max 5MB)
+      const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+      if (file.size > maxSize) {
+        notify.notify("Image size must be less than 5MB", "top-center", "error");
+        return;
+      }
+
       setImageFile(file);
       const objectUrl = URL.createObjectURL(file);
       setImagePreview(objectUrl);
@@ -62,7 +78,30 @@ export const ProfileUploader = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    isLoading(true);
+    
+    // Check if profile image is selected FIRST - before any loading state
+    if (!imageFile) {
+      notify.notify("Please select a profile image", "top-center", "error");
+      return;
+    }
+
+    // Validate the form data
+    try {
+      await newProfileSchema.validateAsync(formData, {
+        abortEarly: false,
+      });
+    } catch (error) {
+      console.error("Validation errors:", error.details);
+      const errorMessages = error.details.map((detail) => detail.message);
+      errorMessages.forEach((msg) => {
+        notify.notify(msg, "top-center", "error");
+      });
+      return;
+    }
+
+    // Only set loading state after all validations pass
+    setIsMainLoading(true);
+
     console.log("Form Submitted!", {
       name: formData.fullName,
       about: formData.about,
@@ -72,34 +111,20 @@ export const ProfileUploader = () => {
     const formDataToSend = new FormData();
     formDataToSend.append("name", formData.fullName);
     formDataToSend.append("about", formData.about);
-    try {
-      const { error } = await newProfileSchema.validateAsync(formData, {
-        abortEarly: false,
-      });
-      if (error) {
-        throw error;
-      }
-    } catch (error) {
-      isLoading(false);
-      console.error("Validation errors:", error.details);
-      const errorMessages = error.details.map((detail) => detail.message);
-      errorMessages.forEach((msg) => {
-        notify.notify(msg, "top-center", "error");
-      });
-    }
-
-    if (imageFile) {
-      formDataToSend.append("profileImage", imageFile);
-    }
+    formDataToSend.append("profileImage", imageFile);
 
     profileUploaderMutation.mutate(formDataToSend, {
       onSuccess: (data) => {
+        setIsMainLoading(false);
         console.log(data);
+        notify.notify("Profile updated successfully!", "top-center", "success");
+        // You can redirect to dashboard or another page here if needed
       },
       onError: (error) => {
-        isLoading(false);
-        notify.notify(error.response.data.message, "top-center", "error");
+        setIsMainLoading(false);
         console.error("Error uploading profile:", error);
+        const errorMessage = error?.response?.data?.message || "Failed to upload profile";
+        notify.notify(errorMessage, "top-center", "error");
       },
     });
   };
@@ -119,7 +144,7 @@ export const ProfileUploader = () => {
               {/* The hidden file input element */}
               <input
                 type="file"
-                accept="image/*"
+                accept="image/jpeg,image/jpg,image/png,image/webp"
                 ref={fileInputRef}
                 onChange={handleImageChange}
                 className="hidden"
@@ -151,6 +176,15 @@ export const ProfileUploader = () => {
                   <CameraIcon className="w-8 h-8 text-white" />
                 </div>
               </div>
+              
+              {/* Image upload instruction */}
+              <p className="text-sm text-muted-foreground text-center">
+                {imageFile ? (
+                  <span className="text-green-600">✓ Image selected</span>
+                ) : (
+                  <span className="text-red-500">* Profile image required</span>
+                )}
+              </p>
             </div>
 
             {/* Full Name Input Field */}
@@ -181,8 +215,15 @@ export const ProfileUploader = () => {
             </div>
 
             {/* Submit Button */}
-            <Button type="submit" className="w-full rounded-md">
-              Save Profile
+            <Button type="submit" disabled={isMainLoading} className="w-full rounded-md">
+              {isMainLoading ? (
+                <div className="flex items-center gap-2">
+                  <Spinner className="animate-spin" size={16} />
+                  Uploading...
+                </div>
+              ) : (
+                "Save Profile"
+              )}
             </Button>
           </form>
         </CardContent>
@@ -190,3 +231,5 @@ export const ProfileUploader = () => {
     </div>
   );
 };
+
+export default ProfileUploader;

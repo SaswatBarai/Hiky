@@ -120,6 +120,6 @@ export const profileUploader = async (formData) => {
 
     return res.data;
   } catch (error) {
-    
+    throw error;
   }
 }
