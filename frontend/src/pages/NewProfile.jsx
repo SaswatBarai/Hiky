@@ -1,12 +1,20 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Button } from '@/components/ui/button';
-import { CameraIcon } from '@radix-ui/react-icons';
-
+import React, { useState, useRef, useEffect } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { CameraIcon } from "@radix-ui/react-icons";
+import { newProfileSchema } from "../validation/auth.validation";
+import { useProfileUploader } from "../utils/queries";
+import { error } from "console";
 
 export const ProfileUploader = () => {
   // State to hold the selected image file and its preview URL.
@@ -14,9 +22,12 @@ export const ProfileUploader = () => {
   const [imagePreview, setImagePreview] = useState(null);
   // State to hold the form data (full name and about text).
   const [formData, setFormData] = useState({
-    fullName: '',
-    about: '',
+    fullName: "",
+    about: "",
   });
+
+  const [isLoading, setIsLoading] = useState(false);
+  const profileUploaderMutation = useProfileUploader();
 
   const fileInputRef = useRef(null);
 
@@ -44,28 +55,63 @@ export const ProfileUploader = () => {
     fileInputRef.current.click();
   };
 
-  
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Form Submitted!', {
-      fullName: formData.fullName,
+    isLoading(true);
+    console.log("Form Submitted!", {
+      name: formData.fullName,
       about: formData.about,
-      imageFile: imageFile,
+      profileImage: imageFile,
+    });
+
+    const formDataToSend = new FormData();
+    formDataToSend.append("name", formData.fullName);
+    formDataToSend.append("about", formData.about);
+    try {
+      const { error } = await newProfileSchema.validateAsync(formData, {
+        abortEarly: false,
+      });
+      if (error) {
+        throw error;
+      }
+    } catch (error) {
+      isLoading(false);
+      console.error("Validation errors:", error.details);
+      const errorMessages = error.details.map((detail) => detail.message);
+      errorMessages.forEach((msg) => {
+        notify.notify(msg, "top-center", "error");
+      });
+    }
+
+    if (imageFile) {
+      formDataToSend.append("profileImage", imageFile);
+    }
+
+    profileUploaderMutation.mutate(formDataToSend, {
+      onSuccess: (data) => {
+        console.log(data);
+      },
+      onError: (error) => {
+        isLoading(false);
+        notify.notify(error.response.data.message, "top-center", "error");
+        console.error("Error uploading profile:", error);
+      },
     });
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen p-4 bg-gray-50">
+    <div className="flex items-center justify-center min-h-screen p-4 bg-muated">
       <Card className="w-full max-w-lg shadow-lg">
         <CardHeader className="text-center">
           <CardTitle className="text-3xl font-bold">Add Profile</CardTitle>
-          <CardDescription>Update your photo and personal details.</CardDescription>
+          <CardDescription>
+            Update your photo and personal details.
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -86,7 +132,10 @@ export const ProfileUploader = () => {
               >
                 <Avatar className="w-full h-full border-4 border-white shadow-md">
                   <AvatarImage
-                    src={imagePreview || "https://placehold.co/150x150/E2E8F0/1E293B?text=P"}
+                    src={
+                      imagePreview ||
+                      "https://placehold.co/150x150/E2E8F0/1E293B?text=P"
+                    }
                     alt="Profile Picture"
                     className="object-cover"
                   />
@@ -141,5 +190,3 @@ export const ProfileUploader = () => {
     </div>
   );
 };
-
-

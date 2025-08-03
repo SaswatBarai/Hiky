@@ -102,3 +102,24 @@ export const resendOTP = async (formData) => {
     throw error;
   }
 }
+
+
+
+export const profileUploader = async (formData) => {
+  try {
+    const res = await axiosInstance.post(
+      `/users/profile-uploader`,
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+        withCredentials: true
+      }
+    )
+
+    return res.data;
+  } catch (error) {
+    
+  }
+}

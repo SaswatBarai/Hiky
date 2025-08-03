@@ -3,7 +3,8 @@ import {
     register,
     getUser,
     verifyEmail,
-    resendOTP
+    resendOTP,
+    profileUploader
 } from "../utils/axios.js";
 
 
@@ -29,5 +30,13 @@ export const useGetUser = () => {
 export const useVerifyEmail = () => {
     return useMutation({
         mutationFn:verifyEmail,
+    })
+}
+
+
+
+export const useProfileUploader = () => {
+    return useMutation({
+        mutationFn: profileUploader,
     })
 }

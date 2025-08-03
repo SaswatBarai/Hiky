@@ -56,6 +56,12 @@ const userSchema = new Schema({
             default: ""
         }
     },
+    about:{
+        type: String,
+        default: "",
+        maxlength: [200, 'About must be at most 200 characters long'],
+        trim: true
+    },
     refreshToken:{
         type: String,
         default: ""

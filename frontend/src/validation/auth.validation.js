@@ -19,3 +19,15 @@ export const registerSchema = joi.object({
         "string.empty": "Confirm Password is required."
     }),
 })
+
+
+export const newProfileSchema = joi.object({
+    name: joi.string().trim().max(50).messages({
+        "string.max": "Name must be at most 50 characters long.",
+        "string.empty": "Name is required." 
+    }),
+    about: joi.string().trim().max(200).messages({
+        "string.max": "About must be at most 200 characters long.",
+        "string.empty": "About is required."
+    })
+})
