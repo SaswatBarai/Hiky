@@ -44,3 +44,20 @@ export const register = async (formData) => {
 }
 
 
+export const getUser = async () => {
+  try {
+    const res = await axiosInstance.get(
+      `/users/get-user-data`,
+      {
+        headers:{
+          'Content-Type': 'application/json',
+        },
+        withCredentials: true
+      }
+    )
+
+    return res.data
+  } catch (error) {
+    throw error;
+  }
+}

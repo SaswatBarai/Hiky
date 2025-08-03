@@ -92,6 +92,7 @@ const RegisterContent = ({
       errorMessages.forEach((msg) => {
         notify.notify(msg, "top-center", "error");
       });
+     return; 
       
     }
 
@@ -107,13 +108,14 @@ const RegisterContent = ({
               sameSite:"Lax",
               
             })
+            setOtp("");
             otpInput.current.click(); 
-            
           }
         },
         onError: (error) => {
           console.error("Registration error:", error.response.data);
           notify.notify(error.response.data.message, "top-center", "error");
+          return;
         }
       }
     )
