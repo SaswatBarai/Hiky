@@ -23,6 +23,7 @@ import Cookie from "js-cookie";
 import { useDispatch } from "react-redux";
 import {setUser} from "../state/authSlice"
 import { Spinner } from "@mynaui/icons-react";
+import { resendOTP } from "../utils/axios";
 
 
 const Register = ({
@@ -86,7 +87,24 @@ const RegisterContent = ({
 
   const handleResendOTP = async () => {
     if (resendTimer > 0) return;
-    
+    setIsResendLoading(true);
+
+    try {
+      const response = await resendOTP({ email });
+      
+      if (response?.success) {
+        notify.notify("OTP resent successfully", "top-center", "success");
+        setResendTimer(60); 
+        setOtp(""); // Clear the OTP input
+      } else {
+        notify.notify("Failed to resend OTP", "top-center", "error");
+      }
+    } catch (error) {
+      console.error("Error resending OTP:", error?.response);
+      notify.notify(error?.response?.data?.message || "Failed to resend OTP", "top-center", "error");
+    } finally {
+      setIsResendLoading(false);
+    }
   };
 
 
@@ -146,6 +164,7 @@ const RegisterContent = ({
           }
         },
         onError: (error) => {
+          setIsMainLoading(false);
           console.error("Registration error:", error.response.data);
           notify.notify(error.response.data.message, "top-center", "error");
           return;
@@ -191,8 +210,8 @@ const RegisterContent = ({
           }
         },
         onError : (error) => {
-          notify.notify(error.response.data.message, "top-center", "error");
           setIsOtpLoading(false);
+          notify.notify(error.response.data.message, "top-center", "error");
           console.error(error.response.data.message);
           
         }

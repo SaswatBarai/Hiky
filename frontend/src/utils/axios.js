@@ -81,3 +81,24 @@ export const verifyEmail = async (formData) => {
     throw error;
   }
 }
+
+
+export const resendOTP = async (formData) => {
+  try {
+    const res = await axiosInstance.post(
+      `/users/resent-otp`,
+      formData,
+      {
+        headers:{
+          'Content-Type': 'application/json',
+        },
+        withCredentials: true
+      }
+
+    )
+
+    return res.data;
+  } catch (error) {
+    throw error;
+  }
+}

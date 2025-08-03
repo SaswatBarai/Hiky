@@ -2,7 +2,8 @@ import {useMutation,useQuery} from "@tanstack/react-query";
 import {
     register,
     getUser,
-    verifyEmail
+    verifyEmail,
+    resendOTP
 } from "../utils/axios.js";
 
 
