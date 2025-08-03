@@ -22,7 +22,7 @@ const router = Router();
 router.post("/register",register)
 router.post("/login",login);
 router.post("/verify-email",verifyEmail)
-router.get("/resent-otp",resentOTP)
+router.post("/resent-otp",resentOTP)
 
 
 
