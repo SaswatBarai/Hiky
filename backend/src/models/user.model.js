@@ -69,8 +69,10 @@ const userSchema = new Schema({
     isEmailVerified:{
         type: Boolean,
         default: false
-    }
-
+    },
+    friend:[
+        {type:Schema.Types.ObjectId,ref:"User"},
+    ]
 },{
     timestamps: true,
 })
