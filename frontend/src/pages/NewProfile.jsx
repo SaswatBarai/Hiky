@@ -16,8 +16,7 @@ import { newProfileSchema } from "../validation/auth.validation";
 import { useProfileUploader } from "../utils/queries";
 import { useNotification } from "../hooks/useNotification";
 import { Spinner } from "@mynaui/icons-react";
-import {useDispatch} from "react-redux"
-
+import { useNavigate } from "react-router-dom";
 export const ProfileUploader = () => {
   // State to hold the selected image file and its preview URL.
   const [imageFile, setImageFile] = useState(null);
@@ -27,7 +26,7 @@ export const ProfileUploader = () => {
     fullName: "",
     about: "",
   });
-
+  const navigate = useNavigate();
   const [isMainLoading, setIsMainLoading] = useState(false);
   const profileUploaderMutation = useProfileUploader();
   const notify = useNotification();
@@ -119,6 +118,7 @@ export const ProfileUploader = () => {
         setIsMainLoading(false);
         console.log(data);
         notify.notify("Profile updated successfully!", "top-center", "success");
+        navigate("/"); 
         // You can redirect to dashboard or another page here if needed
       },
       onError: (error) => {
