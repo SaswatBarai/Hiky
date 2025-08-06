@@ -17,11 +17,7 @@ process.on('SIGTERM', () => {
     console.log('SIGTERM signal received: closing HTTP server');
     server.close(() => {
         console.log('HTTP server closed');
-        // Close WebSocket server
-        wss.close(() => {
-            console.log('WebSocket server closed');
-            process.exit(0);
-        });
+        process.exit(0);
     });
 });
 
@@ -29,11 +25,7 @@ process.on('SIGINT', () => {
     console.log('SIGINT signal received: closing HTTP server');
     server.close(() => {
         console.log('HTTP server closed');
-        // Close WebSocket server
-        wss.close(() => {
-            console.log('WebSocket server closed');
-            process.exit(0);
-        });
+        process.exit(0);
     });
 });
 

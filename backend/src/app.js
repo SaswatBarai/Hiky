@@ -13,17 +13,13 @@ app.use(helmet({
     contentSecurityPolicy: false, // Disable CSP for WebSocket connections
 }));
 
-// CORS configuration
 app.use(cors({
     origin: "http://localhost:5173",
     credentials: true
 }));
-
-// Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Logging middleware
 app.use(morgan("dev"));
 
 // Cookie parser
@@ -70,7 +66,7 @@ app.use("/api/v1/users", userRoutes);
 app.use("/api/v1/messages", messageRoutes);
 
 // 404 handler for undefined routes
-app.use('*', (req, res) => {
+app.use((req, res) => {
     res.status(404).json({
         success: false,
         message: 'Route not found'

@@ -174,7 +174,6 @@ const initializeWebSocket = (server) => {
                     }
 
                     case "typing": {
-                        // Handle typing status
                         const isTyping = !!content;
                         
                         if (isTyping) {

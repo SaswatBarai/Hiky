@@ -262,9 +262,9 @@ export const searchUsers = async (req, res) => {
                 {_id : {$ne: userId}},
                 {
                     $or:[
-                        {username :{$regex : query, $options: i}},
-                        {name :{$regex : query, $options: i}},
-                        {email :{$regex : query, $options: i}}
+                        {username :{$regex : query, $options: "i"}},
+                        {name :{$regex : query, $options: "i"}},
+                        {email :{$regex : query, $options: "i"}}
                     ]
                 }
             ]
