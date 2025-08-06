@@ -84,12 +84,6 @@ const initializeWebSocket = (server) => {
                             participants: Array.from(roomParticipants.get(roomId))
                         }));
 
-                        // Notify other participants that user joined
-                        broadcastToRoom(roomId, {
-                            type: "userJoinedRoom",
-                            userId: userId,
-                            roomId: roomId
-                        }, userId); // Exclude the joining user
                         break;
                     }
 
@@ -110,13 +104,7 @@ const initializeWebSocket = (server) => {
                             type: "leftRoom",
                             roomId: roomId
                         }));
-
-                        // Notify other participants that user left
-                        broadcastToRoom(roomId, {
-                            type: "userLeftRoom",
-                            userId: userId,
-                            roomId: roomId
-                        }, userId);
+                        
                         break;
                     }
 
