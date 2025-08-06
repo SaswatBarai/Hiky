@@ -7,7 +7,7 @@ export const createRoom = async (req, res) => {
   const user = req.user;
 
   try {
-    if (!roomType || !participants || !name) {
+    if (!roomType || !participants ) {
       return res.status(400).json({
         success: false,
         message: "Invalid room data",
@@ -46,14 +46,14 @@ export const createRoom = async (req, res) => {
     let room;
 
     if (roomType === "private") {
-      const exisitingRoom = Room.findOne({
+      const exisitingRoom = await Room.findOne({
         roomType: "private",
         participants: {
           $all: participants,
           $size: 2,
         },
       });
-
+      console.log(exisitingRoom)
       if (exisitingRoom) {
         return res.status(400).json({
           success: true,

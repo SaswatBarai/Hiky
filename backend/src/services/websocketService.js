@@ -264,7 +264,7 @@ function broadcastToRoom(roomId, message, excludeUserId = null) {
         const participants = roomParticipants.get(roomId);
         participants.forEach(participantId => {
             if (excludeUserId && participantId === excludeUserId) {
-                return; // Skip excluded user
+                return;
             }
             
             const client = clients.get(participantId);
