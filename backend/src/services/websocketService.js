@@ -1,212 +1,202 @@
-import { WebSocketServer } from "ws"
-import User from "../models/user.model.js"
-import Room from "../models/room.model.js"
-import Message from "../models/message.model.js"
+import { WebSocketServer } from "ws";
+import User from "../models/user.model.js";
+import Room from "../models/room.model.js";
+import Message from "../models/message.model.js";
 
+//!Store Client connection and user data
 
-const clients = new Map();
-const rooms = new Map();
-const typingUsers = new Map();
-const onlineUsers = new Set();
+const clients = new Map(); // userId --> websocket connection
+const userRooms = new Map(); //userId --> set of roomIds
+const roomParticipant = new Map(); //roomId --> set of userIds
+const typingUsers = new Map(); // userId --> roomId
+const onlineUsers = new Map(); //set of online userIds
 
+const initializeWebSocke = (server) => {
+  const wss = new WebSocketServer({
+    server,
+    path: "/ws",
+  });
 
+  wss.on("connection", (ws) => {
+    let currentUserId = null;
 
+    ws.on("message", async (data) => {
+      try {
+        const message = JSON.parse(data.toString());
 
-const initializeWebSocket = (server) => {
-    const wss = new WebSocketServer({
-        server
-    })
+        const { type, userId, roomId, content, participants } = message;
 
-    wss.on("connection", (ws) => {
-        let msgUserId;
+        currentUserId = userId;
 
-        ws.on("message", async (data) => {
-            try {
-                const message = JSON.parse(data.toString());
-                const {type, userId, roomId, content, participants} = message;
-                
-                // Store userId for use in close event
-                msgUserId = userId;
-    
-                switch (type){
+        switch (type) {
+          case "test": {
+            ws.send(
+              JSON.stringify({
+                type: "testResponse",
+                message: "Websocket connection is working!",
+                timestamp: new Date().toISOString(),
+              })
+            );
+            break;
+          }
 
-                    case "test":{
-                        ws.send(JSON.stringify({
-                            type: "testResponse",
-                            message: "WebSocket connection is working!"
-                        }));
-                    }
-    
-                    case "register":{
-                        //user jesa hee online aya aur register hua
-                        // uska userId aur socket id store karna hai
-                        clients.set(userId, ws);
-                        onlineUsers.add(userId);
-                        ws.send(JSON.stringify({
-                            type:"registered",
-                            userId: userId,
-    
-                        }))
-                        break;
-                    }
-    
-    
-                    case "joinRoom":{
-                        //user kisi room me join hua 
-                        // uska roomId aur socket id store karna hai
-                        console.log("mark 1")
-                        if(!rooms.has(roomId)){
-                            rooms.set(roomId, new Set(participants)); // iska mtalab roomId me participant add ho gya
-                        }
-                        else{
-                            rooms.get(roomId).add(userId);
-                        }
-    
-                        ws.send(JSON.stringify({
-                            type:"joinedRoom",
-                            roomId: roomId,
-                            participants: Array.from(rooms.get(roomId))
-                        }))
-                        break;
-                    }
-    
-                    case "message":{
-                        const room = await Room.findById(roomId);
-                        // if(!room){
-                        //     ws.send(JSON.stringify({
-                        //         type: "error",
-                        //         message: "Room not found"
-                        //     }));
-                        //     return;
-                        // }
-    
-                        // if(!room.participants.includes(userId)){
-                        //     ws.send(JSON.stringify({
-                        //         type: "error",
-                        //         message: "You are not a participant of this room"
-                        //     }));
-                        //     return;
-                        // }
-    
-                        const newMessage = new Message({
-                            roomId,
-                            senderId: userId,
-                            content
-                        })
-                        await newMessage.save();
-    
-                        const populatedMessage = await Message.findById(newMessage._id).populate("senderId","username");
-    
-                        const participants = rooms.get(roomId);
-                        if(participants){
-                            participants.forEach(participantId => {
-                                const client = clients.get(participantId);
-                                if(client && client.readyState === WebSocketServer.OPEN){
-                                    client.send(JSON.stringify({
-                                        type:"message",
-                                        roomId,
-                                        senderId: userId,
-                                        content,
-                                        timestamp: newMessage.createdAt,
-                                        username: populatedMessage.senderId.username
-                                    }))
-                                }
-                            })
-                        }
-    
-                        break;
-                    }
-    
-    
-                    case "typing":{
-                        if(content){
-                            typingUsers.set(userId, roomId);
-    
-                        }
-                        else{
-                            typingUsers.delete(userId);
-                        }
-    
-                        const roomTyping = rooms.get(roomId);
-                        if(roomTyping){
-                            roomTyping.forEach(participantId => {
-                                const client = clients.get(participantId);
-    
-                                if(client && client.readyState === WebSocketServer.OPEN){
-                                    client.send(JSON.stringify({
-                                        type:"typing",
-                                        userId: userId,
-                                        roomId,
-                                        isTyping: !!content // !!content converts content to boolean
-                                    }))
-                                }
-                            })
-                        }
-    
-                        break;
-                    }
-    
-                }
-            } catch (error) {
-                console.error("WebSocket error:", error);
-                ws.send(JSON.stringify({
-                    type: "error",
-                    message: "An error occurred while processing your request"
-                }))
+          case "register": {
+            clients.set(userId, ws);
+            onlineUsers.add(userId);
+
+            const userRoomData = await Room.find({ participants: userId });
+            const roomIds = userRoomData.map((room) => room._id.toString());
+            userRooms.set(userId, new Set(roomIds));
+
+            roomIds.forEach((roomId) => {
+              if (!roomParticipant.has(roomId)) {
+                roomParticipant.get(roomId, new Set());
+              }
+              roomParticipant.get(roomId).add(userId);
+            });
+
+            ws.send(
+              JSON.stringify({
+                type: "registered",
+                userId: userId,
+                message: "Successfully registered for Websocket communication",
+              })
+            );
+
+            await broadcastOnlineStatus(userId, wss);
+            break;
+          }
+          case "joinRoom": {
+            if (!roomParticipant.has(roomId)) {
+              roomParticipant.set(roomId, new Set());
             }
-        });
+            roomParticipant.get(roomId).add(roomId);
 
-        ws.on("close", () => {
-            // User disconnected
-            if(msgUserId){
-                clients.delete(msgUserId);
-                onlineUsers.delete(msgUserId);
-                    typingUsers.delete(msgUserId);
-                rooms.forEach((participants, roomId) => {
-                    if(participants.has(msgUserId)){
-                        participants.delete(msgUserId);
+            if (!userRooms.has(userId)) {
+              userRooms.set(userId, new Set());
+            }
+            userRooms.get(userId).add(roomId);
 
-                        if(participants.size === 0){
-                            rooms.delete(roomId)
-                        }
-                    }
+            ws.send(
+              JSON.stringify({
+                type: "joinedRoom",
+                roomId: roomId,
+                participants: Array.from(roomParticipant.get(roomId)),
+              })
+            );
+            break;
+          }
+
+          case "leaveRoom": {
+            if (roomParticipant.has(roomId)) {
+              roomParticipant.get(roomId).delete(userId);
+              if (roomParticipant.get(roomId).size === 0) {
+                roomParticipant.delete(roomId);
+              }
+            }
+
+            if (userRooms.has(userId)) {
+              userRooms.get(userId).delete(roomId);
+              if (userRooms.get(userId).size === 0) {
+                userRooms.delete(userId);
+              }
+            }
+
+            ws.send(
+              JSON.stringify({
+                type: "leftRoom",
+                roomId: roomId,
+              })
+            );
+
+            break;
+          }
+
+          case "message": {
+            const room = await Room.findById(roomId);
+            if (!room) {
+              ws.send(
+                JSON.stringify({
+                  type: "error",
+                  message: "Room not found",
                 })
+              );
+
+              return;
             }
-        })
-    })
-}
 
-
-
-
-async function broadcastOnlineStatus(userId, wss){
-    try {
-        const user = await User.findById(userId).populate('friends');
-        if(!user) return;
-
-        const onlineFriends = user.friends.filter(friend => onlineUsers.has(friend._id.toString()));
-        const offlineFriends = user.friends.filter(friend => !onlineUsers.has(friend._id.toString()));
-        const onlineStatus = {
-            type: "onlineStatus",
-            userId: user._id.toString(),
-            onlineFriends: onlineFriends.map(friend => ({
-                id: friend._id.toString(),
-                username: friend.username
-            })),
-            offlineFriends: offlineFriends.map(friend => ({
-                id: friend._id.toString(),
-                username: friend.username
-            }))
-        };
-        
-        wss.clients.forEach(client => {
-            if (client.readyState === WebSocketServer.OPEN) {
-                client.send(JSON.stringify(onlineStatus));
+            if (!room.participants.includes(userId)) {
+              ws.send(
+                JSON.stringify({
+                  type: "error",
+                  message: "You are not participant of this room",
+                })
+              );
+              return;
             }
-        });
-    } catch (error) {
-        console.error("Error broadcasting online status:", error);
-    }
-}
 
-export { initializeWebSocket, broadcastOnlineStatus };
+            const newMessage = new Message({
+              roomId,
+              senderId: userId,
+              content,
+            });
+
+            await newMessage.save();
+
+            await Room.findByIdAndUpdate(roomId, { updatedAt: new Date() });
+
+            const populatedMessage = await Message.findById(
+              newMessage._id
+            ).populate("senderId", "username name email profileImage");
+
+            const messageData = {
+              type: "message",
+              roomId,
+              messageId: newMessage._id,
+              senderId: userId,
+              timestamp: newMessage.createdAt,
+              sender: {
+                username: populatedMessage.senderId.username,
+                name: populatedMessage.senderId.name,
+                profileImage: populatedMessage.senderId.profileImage,
+              },
+            };
+
+            broadcastToRoom(roomId,messageData);
+            break;
+          }
+
+          case "typing" :{
+            const istyping = !!content;
+
+            if(istyping){
+                typingUsers.set(userId,roomId);
+            }
+            else{
+                typingUsers.delete(userId)
+            }
+
+            broadcastToRoom(roomId,
+                {
+                    type:"typing",
+                    userId:userId,
+                    roomId:roomId,
+                    isTyping :isTyping 
+                },
+                userId
+            )
+          }
+
+
+
+
+
+
+
+
+
+        }
+      } catch (error) {}
+    });
+  });
+};
