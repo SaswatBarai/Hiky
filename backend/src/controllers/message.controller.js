@@ -167,3 +167,161 @@ export const sendMessage = async (req,res) => {
 
 
 
+export const getMessages = async (req, res) => {
+    const {roomId} = req.params;
+    const {limit = 20, offset = 0} = req.query;
+    const userId = req.user._id;
+
+    try {
+        const room = await Room.findById(roomId).populate("participants", "name email username")
+
+
+        if(!room){
+            return res.status(404).json({
+                success:false,
+                message:"Room not found"
+            })
+        }
+
+        const isParticipant = room.participants.some(x => x._id.toString() === userId.toString());
+
+        if(!isParticipant){
+            return res.status(403).json({
+                success:false,
+                message:"You are not a participant of this room"
+            })
+        }
+
+        const messages = await Message.find({roomId}).sort({createdAt: -1}).skip(parseInt(offset)).limit(parseInt(limit)).populate("sender","name username email profileImage");
+
+        return res.status(200).json({
+            success:true,
+            messages:messages.reverse(),
+            room:room
+        });
+    } catch (error) {
+        return res.status(500).json({
+            success:false,
+            message:"Internal server error",
+            error:error.message
+        })
+    }
+}
+
+
+
+
+export const getUserRooms = async(req, res) => {
+    const userId = req.user._id;
+
+    try {
+        const room = await Room.find({participants:userId}).populate("participants","name email username profileImage").populate("createdBy","name username").sort({updatedAt:-1});
+
+        //Get last message for each room
+        const roomWithLastMessage = await Promise.all(
+            room.map(async (room) => {
+                const lastMessage = await Message.findOne({roomId: room._id}).sort({createdAt : -1}).populate("senderId", "name username");
+
+                return {
+                    ...room.toObject(),
+                    lastMessage:lastMessage || null
+                }
+            })
+        )
+
+
+        return res.status(200).json({
+            success:true,
+            rooms:roomWithLastMessage
+        })
+    } catch (error) {
+        return res.status(500).json({
+            success:false,
+            message:"Internal server error"
+        })
+    }
+}
+
+
+
+export const searchUsers = async (req, res) => {
+    const {query} = req.query;
+    const userId = req.user._id;
+
+    try {
+        if(!query){
+            return res.status(400).json({
+                success:false,
+                message:"Search query is required"
+            })
+        }
+
+
+        const users = await User.find({
+            $and:[
+                {_id : {$ne: userId}},
+                {
+                    $or:[
+                        {username :{$regex : query, $options: i}},
+                        {name :{$regex : query, $options: i}},
+                        {email :{$regex : query, $options: i}}
+                    ]
+                }
+            ]
+        }).select("name username email profileImage").limit(10);
+
+
+    return res.status(200).json({
+        success:true,
+        users
+    })
+    } catch (error) {
+        return res.status(500).json({
+            success:false,
+            message:"Internal server error"
+        })
+    }
+}
+
+
+export const deleteRoom = async (req, res) => {
+    const {roomId} = req.params;
+    const userId = req.user._id;
+
+    try {
+        const room = await Room.findById(roomId);
+        if(!room){
+            return res.status(404).json({
+                success:false,
+                messsage:"Room not found"
+            })
+        }
+
+        if(room.roomType === "group" && room.createdBy.toString() !== userId.toString()){
+            return res.status(403).json({
+                success:false,
+                message:"Only room creator can delete the group"
+            })
+        }
+
+        if(room.roomType === "private" && !room.participants.includes(userId)){
+            return res.status(403).json({
+                success:false,
+                message:"You are not authorized to delete this room"
+            })
+        }
+
+        await Message.deleteMany({roomId});
+        await Room.findByIdAndDelete(roomId);
+
+        return res.status(200).json({
+            success:true,
+            message:"Room deleted successfully"
+        })
+    } catch (error) {
+        return res.status(500).json({
+            success:false,
+            message:"Internal server error"
+        })
+    }
+}
