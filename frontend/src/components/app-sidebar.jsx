@@ -1,15 +1,5 @@
 import {
-  AudioWaveform,
-  BookOpen,
-  Bot,
-  Command,
-  Frame,
-  GalleryVerticalEnd,
-  Menu,
-  Map,
-  PieChart,
   Settings2,
-  SquareTerminal,
   CircleDashed 
 } from "lucide-react"
 
@@ -17,6 +7,7 @@ import { NavMain } from "@/components/nav-main"
 import { NavUser } from "@/components/nav-user"
 import { ChatDots,Telephone  } from "@mynaui/icons-react";
 import { TeamSwitcher } from "@/components/team-switcher"
+import { HikyLogo } from "@/components/hiky-logo"
 import {
   Sidebar,
   SidebarContent,
@@ -25,8 +16,6 @@ import {
   SidebarRail,
   SidebarTrigger
 } from "@/components/ui/sidebar"
-
-// This is sample data.
 const data = {
   user: {
     name: "shadcn",
@@ -35,9 +24,9 @@ const data = {
   },
   teams: [
     {
-      name: "Acme Inc",
-      logo: GalleryVerticalEnd,
-      plan: "Enterprise",
+      name: "Hiky",
+      logo: HikyLogo,
+      plan: "Chat App",
     },
   ],
   navMain: [
