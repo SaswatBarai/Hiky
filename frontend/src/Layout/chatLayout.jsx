@@ -1,5 +1,4 @@
 import { AppSidebar } from "@/components/app-sidebar";
-import { Separator } from "@/components/ui/separator";
 import {
   SidebarInset,
   SidebarProvider,
@@ -7,19 +6,16 @@ import {
 } from "@/components/ui/sidebar";
 import { Outlet } from "react-router-dom";
 
-export default function ChatHome() {
+export default function ChatLayout() {
   return (
     <SidebarProvider defaultOpen={false}>
-      <div className="flex flex-col">
-        <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 pl-[33px]">
-          <div className="flex items-center gap-2 px-4 ">
-
-            <Outlet />
-          </div>
-        </header>
-        <SidebarInset>
+      <div className="flex h-screen w-full overflow-hidden">
+        <div className="w-auto">
           <AppSidebar />
-        </SidebarInset>
+        </div>
+        <div className="flex-1 flex overflow-hidden">
+          <Outlet />
+        </div>
       </div>
     </SidebarProvider>
   );
