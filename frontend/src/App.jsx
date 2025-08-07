@@ -8,6 +8,8 @@ import { ThemeProvider } from "@/components/theme-provider";
 import NotFoundPage from "./pages/NotFoundPage";
 import { ProfileUploader } from "./pages/NewProfile";
 import { useStoreuser } from "../src/hooks/usegetData";
+import ChatLayout  from "./Layout/chatLayout";
+import ChatHome from "./pages/ChatHome";
 
 function App() {
   const { user, isLoading } = useStoreuser();
@@ -19,6 +21,9 @@ function App() {
           <Route element={<Register />} path="/register" />
           <Route element={<ProfileUploader />} path="/profile-uploader" />
           <Route element={<NotFoundPage />} path="/*" />
+        </Route>
+        <Route element={<ChatLayout />} path="/">
+          <Route element={<ChatHome />} path="/" index />
         </Route>
       </Routes>
     </ThemeProvider>

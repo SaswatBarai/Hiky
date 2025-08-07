@@ -4,7 +4,6 @@ import cors from 'cors';
 import { rateLimit } from "express-rate-limit";
 import morgan from "morgan";
 import cookieParser from "cookie-parser";
-import http from 'http';
 
 const app = express();
 

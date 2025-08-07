@@ -2,8 +2,6 @@ import Redis from "ioredis";
 
 import dotenv from "dotenv";
 dotenv.config();
-
-// Debug the Redis URL
 console.log('Redis URL:', process.env.REDIS_URL ? 'Found' : 'Not found');
 
 // Create Redis client using the connection string
