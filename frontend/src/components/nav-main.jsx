@@ -55,6 +55,7 @@ export function NavMain({
             className="group/collapsible"
           >
             <SidebarMenuItem>
+              <SidebarTrigger className="-ml-1" />
                 <SidebarMenuButton tooltip={item.title}>
                   {item.icon && <item.icon />}
                   <span>{item.title}</span>
