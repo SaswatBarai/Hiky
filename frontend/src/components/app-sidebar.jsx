@@ -1,4 +1,3 @@
-
 import {
   AudioWaveform,
   BookOpen,
@@ -6,14 +5,17 @@ import {
   Command,
   Frame,
   GalleryVerticalEnd,
+  Menu,
   Map,
   PieChart,
   Settings2,
   SquareTerminal,
+  CircleDashed 
 } from "lucide-react"
 
 import { NavMain } from "@/components/nav-main"
 import { NavUser } from "@/components/nav-user"
+import { ChatDots,Telephone  } from "@mynaui/icons-react";
 import { TeamSwitcher } from "@/components/team-switcher"
 import {
   Sidebar,
@@ -37,102 +39,28 @@ const data = {
       logo: GalleryVerticalEnd,
       plan: "Enterprise",
     },
-    {
-      name: "Acme Corp.",
-      logo: AudioWaveform,
-      plan: "Startup",
-    },
-    {
-      name: "Evil Corp.",
-      logo: Command,
-      plan: "Free",
-    },
   ],
   navMain: [
     {
-      title: "Playground",
+      title: "Chat",
       url: "#",
-      icon: SquareTerminal,
+      icon: ChatDots,
       isActive: true,
-      items: [
-        {
-          title: "History",
-          url: "#",
-        },
-        {
-          title: "Starred",
-          url: "#",
-        },
-        {
-          title: "Settings",
-          url: "#",
-        },
-      ],
     },
     {
-      title: "Models",
+      title: "Calls",
       url: "#",
-      icon: Bot,
-      items: [
-        {
-          title: "Genesis",
-          url: "#",
-        },
-        {
-          title: "Explorer",
-          url: "#",
-        },
-        {
-          title: "Quantum",
-          url: "#",
-        },
-      ],
+      icon: Telephone,
     },
     {
-      title: "Documentation",
+      title: "Status",
       url: "#",
-      icon: BookOpen,
-      items: [
-        {
-          title: "Introduction",
-          url: "#",
-        },
-        {
-          title: "Get Started",
-          url: "#",
-        },
-        {
-          title: "Tutorials",
-          url: "#",
-        },
-        {
-          title: "Changelog",
-          url: "#",
-        },
-      ],
+      icon: CircleDashed,
     },
     {
       title: "Settings",
       url: "#",
       icon: Settings2,
-      items: [
-        {
-          title: "General",
-          url: "#",
-        },
-        {
-          title: "Team",
-          url: "#",
-        },
-        {
-          title: "Billing",
-          url: "#",
-        },
-        {
-          title: "Limits",
-          url: "#",
-        },
-      ],
     },
   ]
 }
@@ -142,9 +70,12 @@ export function AppSidebar({ ...props }) {
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
         <TeamSwitcher teams={data.teams} />
+           <div className="flex items-center text-center  pl-1 mt-6 mb-6 ">
+            <SidebarTrigger className="-ml-1" />
+           </div>
       </SidebarHeader>
       <SidebarContent>
-        
+       
         <NavMain items={data.navMain} />
       </SidebarContent>
       <SidebarFooter>
