@@ -1,7 +1,6 @@
 "use client"
 
 import { ChevronRight } from "lucide-react"
-
 import {
   Collapsible,
   CollapsibleContent,
@@ -18,8 +17,7 @@ import {
   SidebarMenuSubItem,
   SidebarTrigger
 } from "@/components/ui/sidebar"
-
-
+import {useNavigate} from "react-router-dom"
 // : {
 //   items: {
 //     title: string
@@ -44,6 +42,7 @@ import {
 export function NavMain({
   items,
 }) {
+  const navigate = useNavigate();
   return (
     <SidebarGroup>
       <SidebarMenu>
@@ -52,6 +51,7 @@ export function NavMain({
             key={item.title}
             asChild
             defaultOpen={item.isActive}
+            onClick= {() => navigate(item.url)}
             className="group/collapsible"
           >
             <SidebarMenuItem>

@@ -32,13 +32,13 @@ const data = {
   navMain: [
     {
       title: "Chat",
-      url: "#",
+      url: "/",
       icon: ChatDots,
       isActive: true,
     },
     {
       title: "Calls",
-      url: "#",
+      url: "/calls",
       icon: Telephone,
     },
     {

@@ -1,16 +1,25 @@
 
 
 import { useState } from "react";
-import { Search, MoreVertical, Phone, Video, Paperclip, Smile, Mic, Send } from "lucide-react";
+import { Search, MoreVertical, Phone, Video, Paperclip, Smile, Mic, Send, ArrowLeft } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { usegetRooms } from "../utils/queries";
+import { cn } from "../lib/utils";
+import { useIsMobile } from "../hooks/use-mobile";
 
 function ChatHome() {
   const [selectedChat, setSelectedChat] = useState(null);
+  const isMobile =  useIsMobile();
   
+  const {data,error,isError} = usegetRooms()
+  if (isError) {
+    
+  }
+  console.log(data)
   // Mock data - replace with actual data from your backend
   const chats = [
     { id: 1, name: "John Doe", avatar: "/avatars/john.jpg", lastMessage: "Hello there!", time: "10:30 AM", unread: 2 },
@@ -29,15 +38,17 @@ function ChatHome() {
   ];
 
   return (
-    <div className="flex h-full w-full">
+    <div className="flex h-full w-full overflow-hidden">
       {/* Left Sidebar - Chat List */}
-      <div className="w-1/3 max-w-xs border-r flex flex-col h-full">
+      <div
+        className={cn(
+          "border-r flex flex-col h-full",
+          isMobile ? (selectedChat ? "hidden" : "w-full") : "w-1/3 max-w-xs"
+        )}
+      >
         {/* Header */}
         <div className="p-3 flex items-center justify-between bg-card">
-          <Avatar className="size-10">
-            <AvatarImage src="/avatars/user.jpg" alt="User" />
-            <AvatarFallback>U</AvatarFallback>
-          </Avatar>
+         <h1>Chats</h1>
           <div className="flex items-center gap-4">
             <Button variant="ghost" size="icon">
               <MoreVertical className="h-5 w-5" />
@@ -88,12 +99,32 @@ function ChatHome() {
       </div>
       
       {/* Right Side - Message Section */}
-      <div className="flex-1 flex flex-col h-full">
+      <div
+        className={cn(
+          "flex-1 flex flex-col h-full",
+          isMobile ? (selectedChat ? "flex" : "hidden") : "flex"
+        )}
+      >
         {selectedChat ? (
           <>
             {/* Chat Header */}
-            <div className="p-3 flex items-center justify-between bg-card border-b">
+            <div
+              className={cn(
+                "p-3 flex items-center justify-between bg-card border-b"
+              )}
+            >
               <div className="flex items-center">
+                {isMobile && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="mr-1"
+                    onClick={() => setSelectedChat(null)}
+                    aria-label="Back to chats"
+                  >
+                    <ArrowLeft className="h-5 w-5" />
+                  </Button>
+                )}
                 <Avatar className="size-10 mr-3">
                   <AvatarImage src={chats.find(c => c.id === selectedChat)?.avatar} alt="Chat" />
                   <AvatarFallback>{chats.find(c => c.id === selectedChat)?.name[0]}</AvatarFallback>
@@ -166,6 +197,7 @@ function ChatHome() {
           </div>
         )}
       </div>
+
     </div>
   );
 }
