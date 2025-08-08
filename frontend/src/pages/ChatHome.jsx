@@ -21,60 +21,100 @@ import { useIsMobile } from "../hooks/use-mobile";
 import { SidebarTrigger } from "../components/ui/sidebar";
 import { useTheme } from "../components/theme-provider";
 import { Moon, Sun } from "lucide-react";
+import { useNotification } from "../hooks/useNotification";
+import {useSelector} from "react-redux"
 
-function ChatHome() {
+ function ChatHome() {
   const { setTheme, theme } = useTheme();
   const isDark = theme === "dark";
+  const userId = useSelector((state)=> state.auth?.user?._id);
   const [selectedChat, setSelectedChat] = useState(null);
   const isMobile = useIsMobile();
+  const {notify} = useNotification();
 
   const { data, error, isError } = usegetRooms();
   if (isError) {
+    notify("Error fetching chat rooms", "error");
   }
   console.log(data);
+
+  let structureData;
+  if(data && data?.success && data?.rooms && data?.rooms.length > 0) {
+    structureData = data?.rooms.map(room =>{
+      let name;
+      let avatar;
+      if(room.roomType === "private"){
+        let otherUser = room.participants?.find(x => x._id !== userId)
+        console.log("name",otherUser)
+        name = otherUser?.username
+        avatar = otherUser?.profileImage?.image
+
+      }
+
+      else if(room.roomType === "group"){
+        name = room?.name;
+        avatar = room?.avatar ||"/avatars/group.png";
+      }
+      let lastMessage = room?.lastMessage?.content
+      let time = room?.lastMessage?.createdAt
+      let unread = room?.unreadCount || 0;
+      return {
+        id: room._id,
+        name,
+        avatar,
+        lastMessage,
+        time,
+        unread
+      }
+    })
+  }
+
+  console.log("structureData", structureData)
   // Mock data - replace with actual data from your backend
-  const chats = [
-    {
-      id: 1,
-      name: "John Doe",
-      avatar: "/avatars/john.jpg",
-      lastMessage: "Hello there!",
-      time: "10:30 AM",
-      unread: 2,
-    },
-    {
-      id: 2,
-      name: "Jane Smith",
-      avatar: "/avatars/jane.jpg",
-      lastMessage: "How are you?",
-      time: "9:15 AM",
-      unread: 0,
-    },
-    {
-      id: 3,
-      name: "Bob Johnson",
-      avatar: "/avatars/bob.jpg",
-      lastMessage: "See you tomorrow!",
-      time: "Yesterday",
-      unread: 0,
-    },
-    {
-      id: 4,
-      name: "Alice Brown",
-      avatar: "/avatars/alice.jpg",
-      lastMessage: "Thanks for the info",
-      time: "Yesterday",
-      unread: 1,
-    },
-    {
-      id: 5,
-      name: "Team Hiky",
-      avatar: "/avatars/team.jpg",
-      lastMessage: "Meeting at 3pm",
-      time: "Monday",
-      unread: 0,
-    },
-  ];
+  // const chats = [
+  //   {
+  //     id: 1,
+  //     name: "John Doe",
+  //     avatar: "/avatars/john.jpg",
+  //     lastMessage: "Hello there!",
+  //     time: "10:30 AM",
+  //     unread: 2,
+  //   },
+  //   {
+  //     id: 2,
+  //     name: "Jane Smith",
+  //     avatar: "/avatars/jane.jpg",
+  //     lastMessage: "How are you?",
+  //     time: "9:15 AM",
+  //     unread: 0,
+  //   },
+  //   {
+  //     id: 3,
+  //     name: "Bob Johnson",
+  //     avatar: "/avatars/bob.jpg",
+  //     lastMessage: "See you tomorrow!",
+  //     time: "Yesterday",
+  //     unread: 0,
+  //   },
+  //   {
+  //     id: 4,
+  //     name: "Alice Brown",
+  //     avatar: "/avatars/alice.jpg",
+  //     lastMessage: "Thanks for the info",
+  //     time: "Yesterday",
+  //     unread: 1,
+  //   },
+  //   {
+  //     id: 5,
+  //     name: "Team Hiky",
+  //     avatar: "/avatars/team.jpg",
+  //     lastMessage: "Meeting at 3pm",
+  //     time: "Monday",
+  //     unread: 0,
+  //   },
+  // ];
+
+  const chats = structureData
 
   // Mock messages for selected chat
   const messages = [
@@ -150,7 +190,7 @@ function ChatHome() {
 
         {/* Chat List */}
         <div className="overflow-y-auto flex-grow">
-          {chats.map((chat) => (
+          {chats?.map((chat) => (
             <div
               key={chat.id}
               className={`flex items-center p-3 hover:bg-accent cursor-pointer ${
@@ -159,7 +199,7 @@ function ChatHome() {
               onClick={() => setSelectedChat(chat.id)}
             >
               <Avatar className="size-12 mr-3">
-                <AvatarImage src={chat.avatar} alt={chat.name} />
+                <AvatarImage src={chat.avatar} className="object-fill0" alt={chat.name} />
                 <AvatarFallback>{chat.name[0]}</AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
