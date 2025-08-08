@@ -143,3 +143,22 @@ export const login  = async(formData) => {
     throw error;
   }
 }
+
+
+export const getRooms = async() => {
+  try {
+    const res = await axiosInstance.get(
+      `/messages/rooms`,
+      {
+        headers:{
+          "Content-Type":"application/json"
+        },
+        withCredentials:true
+      }
+    )
+
+    return res.data;
+  } catch (error) {
+   throw error; 
+  }
+}

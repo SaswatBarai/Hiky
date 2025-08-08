@@ -3,9 +3,9 @@ import {
   register,
   getUser,
   verifyEmail,
-  resendOTP,
   profileUploader,
   login,
+  getRooms
 } from "../utils/axios.js";
 
 export const useRegister = () => {
@@ -40,3 +40,16 @@ export const useLogin = () => {
     mutationFn: login,
   });
 };
+
+
+export const usegetRooms = () => {
+  return useQuery({
+    queryKey:["getRooms"],
+    queryFn:getRooms,
+    staleTime: 1000 * 60 * 5, 
+    gcTime: 1000 * 60 * 10,
+    refetchInterval: 1000 * 60 * 1, 
+    refetchIntervalInBackground:true
+  })
+}
+
