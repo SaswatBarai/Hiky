@@ -10,6 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { usegetRooms } from "../utils/queries";
 import { cn } from "../lib/utils";
 import { useIsMobile } from "../hooks/use-mobile";
+import {SidebarTrigger} from "../components/ui/sidebar"
 
 function ChatHome() {
   const [selectedChat, setSelectedChat] = useState(null);
@@ -48,7 +49,10 @@ function ChatHome() {
       >
         {/* Header */}
         <div className="p-3 flex items-center justify-between bg-card">
-         <h1>Chats</h1>
+         <div className="flex items-center text-center pl-1 mt-6 mb-6">
+          {isMobile && <SidebarTrigger className="-ml-1" />}
+          <h1 className="text-lg font-semibold">Chats</h1>
+         </div>
           <div className="flex items-center gap-4">
             <Button variant="ghost" size="icon">
               <MoreVertical className="h-5 w-5" />

@@ -16,6 +16,7 @@ import {
   SidebarRail,
   SidebarTrigger
 } from "@/components/ui/sidebar"
+import { useIsMobile } from "../hooks/use-mobile";
 const data = {
   user: {
     name: "shadcn",
@@ -55,16 +56,16 @@ const data = {
 }
 
 export function AppSidebar({ ...props }) {
+  const isMobile = useIsMobile()
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
         <TeamSwitcher teams={data.teams} />
            <div className="flex items-center text-center  pl-1 mt-6 mb-6 ">
-            <SidebarTrigger className="-ml-1" />
+            {!isMobile && <SidebarTrigger className="-ml-1" />}
            </div>
       </SidebarHeader>
       <SidebarContent>
-       
         <NavMain items={data.navMain} />
       </SidebarContent>
       <SidebarFooter>
