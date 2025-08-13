@@ -167,14 +167,13 @@ export const sendMessage = async (req,res) => {
 
 
 
-export const getMessages = async (req, res) => {
+export const getMessages =  async(req,res) => {
     const {roomId} = req.params;
-    const {limit = 20, offset = 0} = req.query;
+    const {limit = 20, page = 1} = req.query;
     const userId = req.user._id;
 
     try {
-        const room = await Room.findById(roomId).populate("participants", "name email username")
-
+        const room =  await Room.findById(roomId).populate("participants","name email username profileImage")
 
         if(!room){
             return res.status(404).json({
@@ -192,18 +191,37 @@ export const getMessages = async (req, res) => {
             })
         }
 
-        const messages = await Message.find({roomId}).sort({createdAt: -1}).skip(parseInt(offset)).limit(parseInt(limit)).populate("sender","name username email profileImage");
+        const pageNum = parseInt(page);
+        const limitNum = parseInt(limit);
+        const skip = (pageNum-1) * limitNum;
 
-        return res.status(200).json({
-            success:true,
-            messages:messages.reverse(),
-            room:room
-        });
+        const totalMessages = await Message.countDocuments({roomId});
+        const totalPages = Math.ceil(totalMessages / limitNum);
+
+        const messages = await Message.find({roomId})
+            .sort({createdAt: -1}) // Sort by createdAt in descending order of time
+            .skip(skip)
+            .limit(limitNum)
+            .populate("senderId", "name username email profileImage")
+            .lean(); // Use lean to get plain JavaScript objects
+        
+            const reversedMessages = messages.reverse(); 
+
+            return res.status(200).json({
+                success:true,
+                messages:reversedMessages,
+                room:room,
+                totalPages,
+                totalMessages,
+                hasNextPage: pageNum < totalPages,
+                hasPrevPage: pageNum > 1,
+
+            })
+
     } catch (error) {
         return res.status(500).json({
             success:false,
-            message:"Internal server error",
-            error:error.message
+            message:"Internal server error"
         })
     }
 }
@@ -215,19 +233,23 @@ export const getUserRooms = async(req, res) => {
     const userId = req.user._id;
 
     try {
-        const room = await Room.find({participants:userId}).populate("participants","name email username profileImage").populate("createdBy","name username").sort({updatedAt:-1});
+        const room = await Room.find({participants:userId}).populate("participants","name email username profileImage").populate("createdBy","name username").sort({updatedAt:-1}).lean();
 
         //Get last message for each room
         const roomWithLastMessage = await Promise.all(
             room.map(async (room) => {
                 const lastMessage = await Message.findOne({roomId: room._id}).sort({createdAt : -1}).populate("senderId", "name username");
 
+                const unreadCoount = 0;
                 return {
                     ...room.toObject(),
-                    lastMessage:lastMessage || null
+                    lastMessage:lastMessage || null,
+                    unreadCoount
                 }
             })
         )
+
+
 
 
         return res.status(200).json({
@@ -317,6 +339,39 @@ export const deleteRoom = async (req, res) => {
         return res.status(200).json({
             success:true,
             message:"Room deleted successfully"
+        })
+    } catch (error) {
+        return res.status(500).json({
+            success:false,
+            message:"Internal server error"
+        })
+    }
+}
+
+
+export const markMessagesAsRead =  async (req, res) => {
+    const {roomId} = req.params;
+    const userId = req.user._id;
+
+    try {
+        const room = await Room.findById(roomId);
+        if(!room){
+            return res.status(404).json({
+                success:false,
+                message:"Room not found"
+            })
+        }
+        if(!room.participants.includes(userId)){
+            return res.status(403).json({
+                success:false,
+                message:"You are not a participant of this room"
+            })
+        }
+
+
+        return res.status(200).json({
+            success:true,
+            message:"Messages marked as read"
         })
     } catch (error) {
         return res.status(500).json({
