@@ -5,7 +5,8 @@ import {
     getMessages,
     getUserRooms,
     searchUsers,
-    deleteRoom
+    deleteRoom,
+    markMessagesAsRead
 } from "../controllers/message.controller.js";
 import { authMiddleware } from "../middleware/auth.middleware.js";
 
@@ -22,6 +23,7 @@ router.delete("/room/:roomId", deleteRoom);
 // Message routes
 router.post("/send-message", sendMessage);
 router.get("/messages/:roomId", getMessages);
+router.post("/mark-read/:roomId", markMessagesAsRead);
 
 // User search route
 router.get("/search-users", searchUsers);
