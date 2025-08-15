@@ -141,7 +141,7 @@ userActivitySchema.statics.cleanupTypingIndicators = function() {
     const cutoffTime = new Date(Date.now() - 10 * 1000); // 10 seconds ago
     return this.updateMany(
         {
-            typingStartedAt: { $lt: cutoffTime }
+            typingStartedAt: { $lt: cutoffTime } // Remove typing indicators older than 10 seconds
         },
         {
             $unset: {
