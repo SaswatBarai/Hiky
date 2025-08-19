@@ -9,6 +9,7 @@ const userRooms = new Map(); // userId -> Set of roomIds
 const roomParticipants = new Map(); // roomId -> Set of userIds
 const typingUsers = new Map(); // userId -> roomId
 const onlineUsers = new Set(); // Set of online userIds
+const offlineMessageQueue = new Map(); // userId -> Array of pending messages
 
 const initializeWebSocket = (server) => {
     const wss = new WebSocketServer({
@@ -60,6 +61,9 @@ const initializeWebSocket = (server) => {
                             userId: userId,
                             message: "Successfully registered for WebSocket communication"
                         }));
+
+                        // Send any pending offline messages
+                        await deliverOfflineMessages(userId);
 
                         // Broadcast online status to friends
                         await broadcastOnlineStatus(userId, wss);
@@ -142,7 +146,7 @@ const initializeWebSocket = (server) => {
                         const populatedMessage = await Message.findById(newMessage._id)
                             .populate("senderId", "username name email profileImage");
 
-                        // Broadcast message to all room participants
+                        // Prepare message data
                         const messageData = {
                             type: "message",
                             roomId,
@@ -151,13 +155,15 @@ const initializeWebSocket = (server) => {
                             content,
                             timestamp: newMessage.createdAt,
                             sender: {
+                                _id: populatedMessage.senderId._id,
                                 username: populatedMessage.senderId.username,
                                 name: populatedMessage.senderId.name,
                                 profileImage: populatedMessage.senderId.profileImage
                             }
                         };
 
-                        broadcastToRoom(roomId, messageData);
+                        // Broadcast message to online room participants and queue for offline ones
+                        await broadcastMessageToRoom(roomId, messageData, userId);
                         break;
                     }
 
@@ -196,6 +202,21 @@ const initializeWebSocket = (server) => {
                                 type: "onlineStatus",
                                 friends: friendsStatus
                             }));
+                        }
+                        break;
+                    }
+
+                    case "markAsRead": {
+                        // Mark messages as read
+                        const room = await Room.findById(roomId);
+                        if (room && room.participants.includes(userId)) {
+                            // Broadcast read receipt to other participants
+                            broadcastToRoom(roomId, {
+                                type: "messageRead",
+                                userId: userId,
+                                roomId: roomId,
+                                timestamp: new Date()
+                            }, userId);
                         }
                         break;
                     }
@@ -281,6 +302,68 @@ function broadcastToRoom(roomId, message, excludeUserId = null) {
     }
 }
 
+// Enhanced function to broadcast messages and handle offline users
+async function broadcastMessageToRoom(roomId, messageData, excludeUserId = null) {
+    try {
+        const room = await Room.findById(roomId).populate('participants', '_id');
+        if (!room) return;
+
+        room.participants.forEach(participant => {
+            const participantId = participant._id.toString();
+            
+            if (excludeUserId && participantId === excludeUserId) {
+                return;
+            }
+
+            const client = clients.get(participantId);
+            
+            if (client && client.readyState === 1) {
+                // User is online, send message immediately
+                try {
+                    client.send(JSON.stringify(messageData));
+                } catch (error) {
+                    console.error("Error sending message to client:", error);
+                    clients.delete(participantId);
+                }
+            } else {
+                // User is offline, queue message for delivery when they come online
+                if (!offlineMessageQueue.has(participantId)) {
+                    offlineMessageQueue.set(participantId, []);
+                }
+                offlineMessageQueue.get(participantId).push(messageData);
+                
+                // Optional: Limit offline message queue size
+                const queue = offlineMessageQueue.get(participantId);
+                if (queue.length > 100) {
+                    queue.shift(); // Remove oldest message
+                }
+            }
+        });
+    } catch (error) {
+        console.error("Error broadcasting message to room:", error);
+    }
+}
+
+// Deliver offline messages when user comes online
+async function deliverOfflineMessages(userId) {
+    if (offlineMessageQueue.has(userId)) {
+        const messages = offlineMessageQueue.get(userId);
+        const client = clients.get(userId);
+        
+        if (client && client.readyState === 1 && messages.length > 0) {
+            // Send offline messages notification
+            client.send(JSON.stringify({
+                type: "offlineMessages",
+                count: messages.length,
+                messages: messages
+            }));
+            
+            // Clear the queue
+            offlineMessageQueue.delete(userId);
+        }
+    }
+}
+
 // Broadcast online status to friends
 async function broadcastOnlineStatus(userId, wss) {
     try {
@@ -339,10 +422,16 @@ function getRoomParticipantsCount(roomId) {
     return roomParticipants.has(roomId) ? roomParticipants.get(roomId).size : 0;
 }
 
+// Get offline message queue size for a user
+function getOfflineMessageCount(userId) {
+    return offlineMessageQueue.has(userId) ? offlineMessageQueue.get(userId).length : 0;
+}
+
 export { 
     initializeWebSocket, 
     broadcastOnlineStatus, 
     broadcastOfflineStatus,
     getOnlineUsersCount,
-    getRoomParticipantsCount
+    getRoomParticipantsCount,
+    getOfflineMessageCount
 };
