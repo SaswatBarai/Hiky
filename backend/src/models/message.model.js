@@ -117,7 +117,6 @@ const messageSchema = new Schema({
 
 // Indexes for better query performance
 messageSchema.index({ roomId: 1, createdAt: -1 });
-messageSchema.index({ senderId: 1 });
 messageSchema.index({ createdAt: -1 });
 messageSchema.index({ roomId: 1, isDeleted: 1 });
 
