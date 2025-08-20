@@ -231,9 +231,8 @@ export const searchUsers = async(query) => {
         },
         withCredentials: true
       }
-
-
     )
+    return res.data;
   } catch (error) {
     throw error;
   }
