@@ -162,3 +162,116 @@ export const getRooms = async() => {
    throw error; 
   }
 }
+
+
+export const getMessages = async(roomId, page = 1, limit = 20) => {
+  try {
+    const res = await axiosInstance.get(
+      `/messages/messages/${roomId}?page=${page}&limit=${limit}`,
+      {
+        headers:{
+          "Content-Type":"application/json",
+        },
+        withCredentials:true
+      }
+    )
+
+    return res.data;
+  } catch (error) {
+    throw error;
+  }
+}
+
+
+export const sendMessage = async(messageData) => {
+  try {
+    const res = await axiosInstance.post(
+      `/messages/send-message`,
+      messageData,
+      {
+        headers:{
+          "Content-Type":"application/json",
+        },
+        withCredentials:true
+      }
+    )
+
+    return res.data;
+  } catch (error) {
+    throw error;
+  }
+}
+
+
+export const createRoom = async(roomData) => {
+  try {
+    const res = await axiosInstance.post(
+      `/messages/create-room`,
+      roomData,
+      {
+        headers:{
+          "Content-Type":"application/json"
+        },
+        withCredentials:true
+      }
+    )
+    return res.data;
+  } catch (error) {
+    throw error;
+  }
+}
+
+export const searchUsers = async(query) => {
+  try {
+    const res = await axiosInstance.get(
+      `/messages/search-users?query=${encodeURIComponent(query)}`,// why encodeURIComponent? besause query can contain special characters that need to be encoded for URL safety
+      {
+        headers: {
+          "Content-Type": "application/json"
+        },
+        withCredentials: true
+      }
+
+
+    )
+  } catch (error) {
+    throw error;
+  }
+}
+
+
+export const deleteRoom = async(roomId) => {
+  try {
+    const res = await axiosInstance.delete(
+      `/messages/room/${roomId}`,
+      {
+        headers: {
+          "Content-Type": "application/json"
+        },
+        withCredentials: true
+      }
+    )
+    return res.data;
+  } catch (error) {
+    throw error
+  }
+}
+
+export const markMessagesAsRead = async(roomId) => {
+  try {
+    const res = await axiosInstance.post(
+      `/messages/mark-read/${roomId}`,
+      {},
+      {
+        headers: {
+          "Content-Type": "application/json"
+        },
+        withCredentials: true
+      }
+    )
+    
+    return res.data;
+  } catch (error) {
+    throw error;
+  }
+}
