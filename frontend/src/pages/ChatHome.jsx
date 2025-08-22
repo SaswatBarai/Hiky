@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import {
   Search,
   MoreVertical,
@@ -14,125 +14,125 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { usegetRooms } from "../utils/queries";
 import { cn } from "../lib/utils";
 import { useIsMobile } from "../hooks/use-mobile";
 import { SidebarTrigger } from "../components/ui/sidebar";
 import { useTheme } from "../components/theme-provider";
 import { Moon, Sun } from "lucide-react";
 import { useNotification } from "../hooks/useNotification";
-import {useSelector} from "react-redux"
+import { useSelector } from "react-redux";
+import { usegetRooms, useGetMessagesInfinite } from "../utils/queries";
 
- function ChatHome() {
+function ChatHome() {
   const { setTheme, theme } = useTheme();
   const isDark = theme === "dark";
-  const userId = useSelector((state)=> state.auth?.user?._id);
+  const userId = useSelector((state) => state.auth?.user?._id);
   const [selectedChat, setSelectedChat] = useState(null);
+  const [messages, setMessages] = useState([]);
   const isMobile = useIsMobile();
-  const {notify} = useNotification();
+  const { notify } = useNotification();
+  const messagesEndRef = useRef(null);
+  const messagesContainerRef = useRef(null);
 
   const { data, error, isError } = usegetRooms();
-  if (isError) {
-    notify("Error fetching chat rooms", "error");
-  }
-  console.log(data);
+  useEffect(() => {
+    if (isError) {
+      notify("Error fetching chat rooms", "error");
+    }
+  }, [isError, notify]);
 
-  let structureData;
-  if(data && data?.success && data?.rooms && data?.rooms.length > 0) {
-    structureData = data?.rooms.map(room =>{
-      let name;
-      let avatar;
-      if(room.roomType === "private"){
-        let otherUser = room.participants?.find(x => x._id !== userId)
-        console.log("name",otherUser)
-        name = otherUser?.username
-        avatar = otherUser?.profileImage?.image
+  const {
+    data: messageData,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading: isMessagesLoading,
+  } = useGetMessagesInfinite(selectedChat, !!selectedChat);
 
+  // Format date for separators
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    if (date.toDateString() === today.toDateString()) return "Today";
+    if (date.toDateString() === yesterday.toDateString()) return "Yesterday";
+    return date.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' });
+  };
+
+  // Process messages from API
+  useEffect(() => {
+    if (!messageData) return;
+
+    const allMessages = messageData.pages
+      .flatMap((page) => page.messages)
+      .map((msg) => ({
+        id: msg._id,
+        text: msg.content,
+        sender: msg.senderId._id === userId ? "me" : "other",
+        time: new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        timeStr: msg.createdAt,
+        profileImage: msg.senderId.profileImage?.image,
+      }))
+      .sort((a, b) => new Date(a.timeStr) - new Date(b.timeStr));
+
+    setMessages(allMessages);
+  }, [messageData, userId]);
+
+  // Auto-scroll to bottom
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  // Infinite scroll
+  useEffect(() => {
+    const container = messagesContainerRef.current;
+    if (!container || !hasNextPage || isFetchingNextPage) return;
+
+    const handleScroll = () => {
+      if (container.scrollTop < 100) {
+        fetchNextPage();
+      }
+    };
+
+    container.addEventListener("scroll", handleScroll);
+    return () => container.removeEventListener("scroll", handleScroll);
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  // Structure room data
+  let structureData = null;
+  if (data && data.success && data.rooms?.length > 0) {
+    structureData = data.rooms.map((room) => {
+      let name, avatar;
+      if (room.roomType === "private") {
+        const otherUser = room.participants.find((x) => x._id !== userId);
+        name = otherUser?.username;
+        avatar = otherUser?.profileImage?.image;
+      } else if (room.roomType === "group") {
+        name = room.name;
+        avatar = room.avatar || "/avatars/group.png";
       }
 
-      else if(room.roomType === "group"){
-        name = room?.name;
-        avatar = room?.avatar ||"/avatars/group.png";
-      }
-      let lastMessage = room?.lastMessage?.content
-      let time = room?.lastMessage?.createdAt
-      let unread = room?.unreadCount || 0;
       return {
         id: room._id,
         name,
         avatar,
-        lastMessage,
-        time,
-        unread
-      }
-    })
+        lastMessage: room.lastMessage?.content || "No messages yet",
+        time: new Date(room.lastMessage?.createdAt || room.createdAt).toLocaleTimeString([], { 
+          hour: '2-digit', 
+          minute: '2-digit' 
+        }),
+        unread: room.unreadCount || 0,
+      };
+    });
   }
 
-  console.log("structureData", structureData)
-  // Mock data - replace with actual data from your backend
-  // const chats = [
-  //   {
-  //     id: 1,
-  //     name: "John Doe",
-  //     avatar: "/avatars/john.jpg",
-  //     lastMessage: "Hello there!",
-  //     time: "10:30 AM",
-  //     unread: 2,
-  //   },
-  //   {
-  //     id: 2,
-  //     name: "Jane Smith",
-  //     avatar: "/avatars/jane.jpg",
-  //     lastMessage: "How are you?",
-  //     time: "9:15 AM",
-  //     unread: 0,
-  //   },
-  //   {
-  //     id: 3,
-  //     name: "Bob Johnson",
-  //     avatar: "/avatars/bob.jpg",
-  //     lastMessage: "See you tomorrow!",
-  //     time: "Yesterday",
-  //     unread: 0,
-  //   },
-  //   {
-  //     id: 4,
-  //     name: "Alice Brown",
-  //     avatar: "/avatars/alice.jpg",
-  //     lastMessage: "Thanks for the info",
-  //     time: "Yesterday",
-  //     unread: 1,
-  //   },
-  //   {
-  //     id: 5,
-  //     name: "Team Hiky",
-  //     avatar: "/avatars/team.jpg",
-  //     lastMessage: "Meeting at 3pm",
-  //     time: "Monday",
-  //     unread: 0,
-  //   },
-  // ];
+  const chats = structureData || [];
+  const selectedChatInfo = chats.find((c) => c.id === selectedChat);
 
-  const chats = structureData
-
-  // Mock messages for selected chat
-  const messages = [
-    { id: 1, text: "Hey there!", sender: "other", time: "10:25 AM" },
-    { id: 2, text: "Hi! How are you?", sender: "me", time: "10:26 AM" },
-    {
-      id: 3,
-      text: "I'm good, thanks! Just wanted to check in.",
-      sender: "other",
-      time: "10:28 AM",
-    },
-    {
-      id: 4,
-      text: "That's great to hear. I'm doing well too.",
-      sender: "me",
-      time: "10:30 AM",
-    },
-  ];
+  // WhatsApp-style background SVG (encoded)
+  const whatsappBgPattern = `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23075E54' fill-opacity='0.05'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`;
 
   return (
     <div className="flex h-full w-full overflow-hidden relative">
@@ -149,38 +149,24 @@ import {useSelector} from "react-redux"
             {isMobile && <SidebarTrigger />}
             <h1 className="text-lg font-semibold">Chats</h1>
           </div>
-          <div className="flex items-center gap-2">
-            {/* <Button variant="ghost" size="icon"> */}
-              <div
-                className={cn(
-                  "flex left-4 bottom-6 transition-all duration-300 cursor-pointer z-50 group",
-                  "hover:scale-110"
-                )}
-              >
-                <div className="p-3 rounded-full bg-background/80 backdrop-blur-sm shadow-lg border border-border/50 hover:shadow-xl transition-all duration-200"
-                onClick={() => setTheme(isDark ? "light" : "dark")}
-                >
-                  {isDark ? (
-                    <Sun
-                      className="w-5 h-5 text-yellow-500 transition-all duration-300 group-hover:rotate-45"
-                
-                    />
-                  ) : (
-                    <Moon
-                      className="w-5 h-5 text-blue-600 transition-all duration-300 group-hover:-rotate-45"
-                    
-                    />
-                  )}
-                </div>
-              </div>
-           
+          <div
+            className="flex cursor-pointer z-50 group hover:scale-110 transition-transform"
+            onClick={() => setTheme(isDark ? "light" : "dark")}
+          >
+            <div className="p-3 rounded-full bg-background/80 backdrop-blur-sm shadow-lg border border-border/50 hover:shadow-xl transition-all">
+              {isDark ? (
+                <Sun className="w-5 h-5 text-yellow-500 group-hover:rotate-45 transition-transform" />
+              ) : (
+                <Moon className="w-5 h-5 text-blue-600 group-hover:-rotate-45 transition-transform" />
+              )}
+            </div>
           </div>
         </div>
 
         {/* Search Bar */}
         <div className="p-3">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               placeholder="Search or start a new chat"
               className="pl-10 bg-background"
@@ -190,22 +176,22 @@ import {useSelector} from "react-redux"
 
         {/* Chat List */}
         <div className="overflow-y-auto flex-grow">
-          {chats?.map((chat) => (
+          {chats.map((chat) => (
             <div
               key={chat.id}
-              className={`flex items-center p-3 hover:bg-accent cursor-pointer ${
-                selectedChat === chat.id ? "bg-accent" : ""
+              className={`flex items-center p-3 hover:bg-green-50 dark:hover:bg-green-900/20 cursor-pointer transition-colors ${
+                selectedChat === chat.id ? "bg-green-100 dark:bg-green-900/30" : ""
               }`}
               onClick={() => setSelectedChat(chat.id)}
             >
               <Avatar className="size-12 mr-3">
-                <AvatarImage src={chat.avatar} className="object-fill0" alt={chat.name} />
+                <AvatarImage src={chat.avatar} alt={chat.name} />
                 <AvatarFallback>{chat.name[0]}</AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
                 <div className="flex justify-between items-center">
                   <h3 className="font-medium truncate">{chat.name}</h3>
-                  <span className="text-xs text-muted-foreground">
+                  <span className="text-xs text-muted-foreground ml-2">
                     {chat.time}
                   </span>
                 </div>
@@ -214,7 +200,7 @@ import {useSelector} from "react-redux"
                     {chat.lastMessage}
                   </p>
                   {chat.unread > 0 && (
-                    <span className="bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                    <span className="bg-green-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center ml-2">
                       {chat.unread}
                     </span>
                   )}
@@ -225,21 +211,25 @@ import {useSelector} from "react-redux"
         </div>
       </div>
 
-      {/* Right Side - Message Section */}
+      {/* Right Side - Message Section with WhatsApp-like Background */}
       <div
         className={cn(
           "flex-1 flex flex-col h-full",
           isMobile ? (selectedChat ? "flex" : "hidden") : "flex"
         )}
+        style={{
+          backgroundImage: isDark
+            ? "radial-gradient(circle at 50% 50%, rgba(13, 30, 30, 0.8), rgba(0, 0, 0, 0.9)), linear-gradient(to bottom, #0b1a1a, #0a1212)"
+            : `${whatsappBgPattern}, linear-gradient(to bottom, #f0fdf4, #e6f5e6)`,
+          backgroundBlendMode: "overlay, normal",
+          backgroundColor: isDark ? "#0a1212" : "#f0fdf4",
+          backgroundSize: "30px 30px, auto",
+        }}
       >
         {selectedChat ? (
           <>
             {/* Chat Header */}
-            <div
-              className={cn(
-                "p-3 flex items-center justify-between bg-card border-b"
-              )}
-            >
+            <div className="p-3 flex items-center justify-between bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
               <div className="flex items-center">
                 {isMobile && (
                   <Button
@@ -253,85 +243,161 @@ import {useSelector} from "react-redux"
                   </Button>
                 )}
                 <Avatar className="size-10 mr-3">
-                  <AvatarImage
-                    src={chats.find((c) => c.id === selectedChat)?.avatar}
-                    alt="Chat"
-                  />
-                  <AvatarFallback>
-                    {chats.find((c) => c.id === selectedChat)?.name[0]}
-                  </AvatarFallback>
+                  <AvatarImage src={selectedChatInfo?.avatar} alt={selectedChatInfo?.name} />
+                  <AvatarFallback>{selectedChatInfo?.name[0]}</AvatarFallback>
                 </Avatar>
                 <div>
-                  <h3 className="font-medium">
-                    {chats.find((c) => c.id === selectedChat)?.name}
-                  </h3>
-                  <p className="text-xs text-muted-foreground">Online</p>
+                  <h3 className="font-medium text-gray-800 dark:text-gray-100">{selectedChatInfo?.name}</h3>
+                  <p className="text-xs text-green-600 dark:text-green-400">Online</p>
                 </div>
               </div>
-              <div className="flex items-center gap-4">
-                <Button variant="ghost" size="icon">
-                  <Phone className="h-5 w-5" />
+
+              {/* Chat Actions */}
+              <div className="flex items-center gap-2">
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="text-green-600 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-900/20"
+                >
+                  <Phone className="h-8 w-8" />
                 </Button>
-                <Button variant="ghost" size="icon">
-                  <Video className="h-5 w-5" />
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="text-green-600 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-900/20"
+                >
+                  <Video className="h-7 w-7" />
                 </Button>
-                <Button variant="ghost" size="icon">
-                  <Search className="h-5 w-5" />
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="text-green-600 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-900/20"
+                >
+                  <Search className="h-7 w-7" />
                 </Button>
-                <Button variant="ghost" size="icon">
-                  <MoreVertical className="h-5 w-5" />
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="text-green-600 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-900/20"
+                >
+                  <MoreVertical className="h-7 w-7" />
                 </Button>
               </div>
             </div>
 
             {/* Messages Area */}
-            <div className="flex-grow p-4 overflow-y-auto bg-[#f0f0f0] dark:bg-[#2a2a2a] flex flex-col">
-              {messages.map((message) => (
-                <div
-                  key={message.id}
-                  className={`max-w-[70%] mb-3 ${
-                    message.sender === "me" ? "ml-auto" : "mr-auto"
-                  }`}
-                >
-                  <Card
-                    className={`p-3 ${
-                      message.sender === "me" ? "bg-primary/10" : "bg-card"
-                    }`}
-                  >
-                    <p>{message.text}</p>
-                    <p className="text-xs text-muted-foreground text-right mt-1">
-                      {message.time}
-                    </p>
-                  </Card>
+            <div
+              ref={messagesContainerRef}
+              className="flex-grow p-4 overflow-y-auto flex flex-col space-y-2"
+              style={{
+                backdropFilter: isDark ? "blur(4px)" : "none",
+              }}
+            >
+              {messages.length === 0 ? (
+                <div className="text-center text-muted-foreground mt-8">
+                  No messages yet. Start the conversation!
                 </div>
-              ))}
+              ) : (
+                messages.map((message, index) => {
+                  const isMe = message.sender === "me";
+                  const prevMessage = messages[index - 1];
+                  const showAvatar = !isMe && (!prevMessage || prevMessage.sender !== "other");
+
+                  const currentMsgDate = new Date(message.timeStr);
+                  const prevMsgDate = prevMessage ? new Date(prevMessage.timeStr) : null;
+                  const shouldShowDate = !prevMsgDate || formatDate(currentMsgDate) !== formatDate(prevMsgDate);
+
+                  return (
+                    <div key={message.id}>
+                      {/* Date Separator */}
+                      {shouldShowDate && (
+                        <div className="flex justify-center my-4">
+                          <span className="text-xs bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-200 px-3 py-1 rounded-full font-medium">
+                            {formatDate(currentMsgDate)}
+                          </span>
+                        </div>
+                      )}
+
+                      {/* Message Bubble */}
+                      <div className={`flex ${isMe ? "justify-end" : "justify-start"} mb-2`}>
+                        {!isMe && showAvatar && (
+                          <Avatar className="size-8 mr-2 self-end flex-shrink-0">
+                            <AvatarImage src={message.profileImage} alt="User" />
+                            <AvatarFallback>{selectedChatInfo?.name[0]}</AvatarFallback>
+                          </Avatar>
+                        )}
+
+                        <div className={`flex flex-col ${isMe ? "items-end" : "items-start"} max-w-[70%]`}>
+                          <div
+                            className={cn(
+                              "px-4 py-2 rounded-2xl break-words",
+                              isMe
+                                ? "bg-green-600 text-white rounded-tr-none"
+                                : "bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border border-gray-200 dark:border-gray-700 rounded-tl-none",
+                              "shadow-sm transition-all duration-200 hover:shadow"
+                            )}
+                          >
+                            <p className="text-sm leading-relaxed">{message.text}</p>
+                          </div>
+                          <span className="text-xs text-gray-500 dark:text-gray-400 mt-1 ml-1">
+                            {message.time}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+              <div ref={messagesEndRef} />
             </div>
 
             {/* Message Input */}
-            <div className="p-3 flex items-center gap-2 bg-card border-t">
-              <Button variant="ghost" size="icon">
+            <div className="p-3 flex items-center gap-2 bg-white/60 dark:bg-gray-900/60 backdrop-blur-md border-t border-gray-200 dark:border-gray-800">
+              <Button variant="ghost" size="icon" className="text-green-600 hover:text-green-700">
                 <Smile className="h-5 w-5" />
               </Button>
-              <Button variant="ghost" size="icon">
+              <Button variant="ghost" size="icon" className="text-green-600 hover:text-green-700">
                 <Paperclip className="h-5 w-5" />
               </Button>
-              <Input placeholder="Type a message" className="flex-grow" />
-              <Button variant="ghost" size="icon">
+              <Input
+                placeholder="Type a message"
+                className="flex-grow bg-white/80 dark:bg-gray-800/80 border-none shadow-sm"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    // Add send message logic here
+                  }
+                }}
+              />
+              <Button variant="ghost" size="icon" className="text-green-600 hover:text-green-700">
                 <Mic className="h-5 w-5" />
               </Button>
-              <Button size="icon" className="rounded-full">
+              <Button
+                size="icon"
+                className="rounded-full bg-green-600 hover:bg-green-700 text-white transition-colors"
+              >
                 <Send className="h-5 w-5" />
               </Button>
             </div>
           </>
         ) : (
-          // Welcome screen when no chat is selected
-          <div className="flex-grow flex flex-col items-center justify-center bg-[#f0f0f0] dark:bg-[#2a2a2a] text-center p-6 h-full">
-            <div className="max-w-md">
-              <h2 className="text-2xl font-bold mb-4">Welcome to Hiky</h2>
+          /* Welcome Screen */
+          <div
+            className="flex-grow flex flex-col items-center justify-center text-center p-6 h-full"
+            style={{
+              backgroundImage: isDark
+                ? "radial-gradient(circle at 50% 50%, rgba(13, 30, 30, 0.6), rgba(0, 0, 0, 0.9)), linear-gradient(to bottom, #0b1a1a, #0a1212)"
+                : `${whatsappBgPattern}, linear-gradient(to bottom, #f0fdf4, #e6f5e6)`,
+              backgroundBlendMode: "overlay, normal",
+              backgroundColor: isDark ? "#0a1212" : "#f0fdf4",
+              backgroundSize: "30px 30px, auto",
+              color: isDark ? "#e0f7e0" : "#1a5d1a",
+            }}
+          >
+            <div className="max-w-md space-y-4">
+              <h2 className="text-2xl font-bold text-green-600 dark:text-green-400">Welcome to Hiky</h2>
               <p className="text-muted-foreground">
-                Select a chat from the sidebar to start messaging, or create a
-                new chat.
+                Select a chat from the sidebar to start messaging, or create a new chat.
               </p>
             </div>
           </div>
