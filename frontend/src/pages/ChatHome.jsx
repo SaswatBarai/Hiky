@@ -13,7 +13,6 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { cn } from "../lib/utils";
 import { useIsMobile } from "../hooks/use-mobile";
 import { SidebarTrigger } from "../components/ui/sidebar";

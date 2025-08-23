@@ -12,7 +12,7 @@ export const useWebSocket = (onMessage) => {
   const connect = useCallback(() => {
     if (!userId) return;
 
-    const wsUrl = `${import.meta.env.VITE_WS_URL || 'ws://localhost:5000'}/ws`;
+    const wsUrl = `${import.meta.env.VITE_WS_URL || 'ws://localhost:8000'}/ws`;
     const ws = new WebSocket(wsUrl);
 
     ws.onopen = () => {
@@ -20,7 +20,7 @@ export const useWebSocket = (onMessage) => {
       setIsConnected(true);
       setConnectionAttempts(0);
       
-      // Register user with WebSocket server
+      
       ws.send(JSON.stringify({
         type: 'register',
         userId: userId
