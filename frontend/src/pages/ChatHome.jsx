@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import {
   Search,
   MoreVertical,
@@ -21,6 +21,7 @@ import { Moon, Sun } from "lucide-react";
 import { useNotification } from "../hooks/useNotification";
 import { useSelector } from "react-redux";
 import { usegetRooms, useGetMessagesInfinite } from "../utils/queries";
+import { useWebSocket } from "../hooks/useWebSocket"
 
 function ChatHome() {
   const { setTheme, theme } = useTheme();
@@ -28,15 +29,82 @@ function ChatHome() {
   const userId = useSelector((state) => state.auth?.user?._id);
   const [selectedChat, setSelectedChat] = useState(null);
   const [messages, setMessages] = useState([]);
+  const [newMessage, setNewMessage] = useState(""); // Input field state
   const isMobile = useIsMobile();
   const { notify } = useNotification();
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
 
+  const handleWebSocketMessage = useCallback((data) => {
+    console.log("Received WebSocket message:", data);
+
+    switch (data.type) {
+      case "message":
+        if (data.roomId === selectedChat) {
+          //Add new message to the current chat 
+          const newMsg = {
+            id: data.messageId,
+            text: data.content,
+            sender: data.senderId === userId ? "me" : "other",
+            time: new Date(data.timestamp).toLocaleDateString([], {
+              hour: "2-digit",
+              minute: "2-digit"
+            }),
+            timeStr: data.timestamp,
+            profileImage: data.sender?.profileImage.image,
+          }
+
+          setMessages(prev => [...prev, newMsg])
+        } else {
+          notify(`New message from ${data.sender?.username || "Unknown"}`, "info")
+        }
+        break;
+
+      case "typing":
+        console.log(`User ${data.userId} is ${data.isTyping ? "typing" : "not typing"}`, "info")
+        break;
+
+      case "friendOnline":
+        notify(`Your friend ${data.username} is online`, "info")
+        break;
+
+      case "friendOffline":
+        notify(`Your friend ${data.username} is offline`, "info")
+        break;
+
+      case "registered":
+        console.log("Successfully registered to WebSocket communication")
+        break;
+
+      case "joinedRoom":
+        console.log(`Joined room ${data.roomId} successfully`)
+        break;
+
+      case "error":
+        notify(data.message || "WebSocket error occurred", "error")
+        break;
+
+      default:
+        console.log("Unknown WebSocket message type:", data)
+    }
+  }, [selectedChat, userId, notify]);
+
+
+  const {
+    isConnected,
+    sendMessage,
+    joinRoom,
+    leaveRoom,
+    sendChatMessage,
+    sendTypingIndicator,
+    markAsRead
+  } = useWebSocket(handleWebSocketMessage);
+
+
   const { data, error, isError } = usegetRooms();
   useEffect(() => {
     if (isError) {
-      notify("Error fetching chat rooms", "error");
+      notify("Error fetching chat rooms", error);
     }
   }, [isError, notify]);
 
@@ -47,6 +115,21 @@ function ChatHome() {
     isFetchingNextPage,
     isLoading: isMessagesLoading,
   } = useGetMessagesInfinite(selectedChat, !!selectedChat);
+
+
+  useEffect(() => {
+    if (!selectedChat || !isConnected) return;
+    joinRoom(selectedChat);
+    markAsRead(selectedChat);
+
+    return () => {
+      leaveRoom(selectedChat);
+    }
+  }, [selectedChat, isConnected, joinRoom, leaveRoom, markAsRead])
+
+
+
+
 
   // Format date for separators
   const formatDate = (dateString) => {
@@ -99,6 +182,21 @@ function ChatHome() {
     return () => container.removeEventListener("scroll", handleScroll);
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
+
+  //Handle sending messages 
+  const handleSendMessage = useCallback((content) => {
+    if(!newMessage.trim() || !selectedChat || !isConnected) return ;
+
+    const success = sendChatMessage(selectedChat, content);
+    if (success) {
+      setNewMessage("");
+      sendTypingIndicator(selectedChat, false);
+    } else {
+      notify("Failed to send message. WebSocket not connected.", "error");
+    }
+  },[newMessage,selectedChat,isConnected ,sendChatMessage,sendTypingIndicator,notify]);
+
+
   // Structure room data
   let structureData = null;
   if (data && data.success && data.rooms?.length > 0) {
@@ -118,9 +216,9 @@ function ChatHome() {
         name,
         avatar,
         lastMessage: room.lastMessage?.content || "No messages yet",
-        time: new Date(room.lastMessage?.createdAt || room.createdAt).toLocaleTimeString([], { 
-          hour: '2-digit', 
-          minute: '2-digit' 
+        time: new Date(room.lastMessage?.createdAt || room.createdAt).toLocaleTimeString([], {
+          hour: '2-digit',
+          minute: '2-digit'
         }),
         unread: room.unreadCount || 0,
       };
@@ -178,9 +276,8 @@ function ChatHome() {
           {chats.map((chat) => (
             <div
               key={chat.id}
-              className={`flex items-center p-3 hover:bg-green-50 dark:hover:bg-green-900/20 cursor-pointer transition-colors ${
-                selectedChat === chat.id ? "bg-green-100 dark:bg-green-900/30" : ""
-              }`}
+              className={`flex items-center p-3 hover:bg-green-50 dark:hover:bg-green-900/20 cursor-pointer transition-colors ${selectedChat === chat.id ? "bg-green-100 dark:bg-green-900/30" : ""
+                }`}
               onClick={() => setSelectedChat(chat.id)}
             >
               <Avatar className="size-12 mr-3">
@@ -253,30 +350,30 @@ function ChatHome() {
 
               {/* Chat Actions */}
               <div className="flex items-center gap-2">
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
+                <Button
+                  variant="ghost"
+                  size="icon"
                   className="text-green-600 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-900/20"
                 >
                   <Phone className="h-8 w-8" />
                 </Button>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
+                <Button
+                  variant="ghost"
+                  size="icon"
                   className="text-green-600 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-900/20"
                 >
                   <Video className="h-7 w-7" />
                 </Button>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
+                <Button
+                  variant="ghost"
+                  size="icon"
                   className="text-green-600 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-900/20"
                 >
                   <Search className="h-7 w-7" />
                 </Button>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
+                <Button
+                  variant="ghost"
+                  size="icon"
                   className="text-green-600 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-900/20"
                 >
                   <MoreVertical className="h-7 w-7" />
