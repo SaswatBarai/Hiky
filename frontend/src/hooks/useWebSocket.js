@@ -6,8 +6,14 @@ export const useWebSocket = (onMessage) => {
   const [isConnected, setIsConnected] = useState(false);
   const [connectionAttempts, setConnectionAttempts] = useState(0);
   const reconnectTimeoutRef = useRef(null);
+  const onMessageRef = useRef(onMessage);
   const maxReconnectAttempts = 5;
   const userId = useSelector((state) => state.auth?.user?._id);
+
+  // Update the ref when onMessage changes to avoid stale closures
+  useEffect(() => {
+    onMessageRef.current = onMessage;
+  }, [onMessage]);
 
   const connect = useCallback(() => {
     if (!userId) return;
@@ -20,7 +26,7 @@ export const useWebSocket = (onMessage) => {
       setIsConnected(true);
       setConnectionAttempts(0);
       
-      
+      // Register user with WebSocket server
       ws.send(JSON.stringify({
         type: 'register',
         userId: userId
@@ -30,8 +36,8 @@ export const useWebSocket = (onMessage) => {
     ws.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
-        if (onMessage) {
-          onMessage(data);
+        if (onMessageRef.current) {
+          onMessageRef.current(data);
         }
       } catch (error) {
         console.error('Error parsing WebSocket message:', error);
@@ -43,9 +49,9 @@ export const useWebSocket = (onMessage) => {
       setIsConnected(false);
       setSocket(null);
 
-      // Attempt to reconnect
+      // Only attempt to reconnect if we haven't exceeded max attempts
       if (connectionAttempts < maxReconnectAttempts) {
-        const delay = Math.pow(2, connectionAttempts) * 1000; // Exponential backoff
+        const delay = Math.min(Math.pow(2, connectionAttempts) * 1000, 30000); // Cap at 30s
         console.log(`Attempting to reconnect in ${delay}ms...`);
         
         reconnectTimeoutRef.current = setTimeout(() => {
@@ -62,7 +68,7 @@ export const useWebSocket = (onMessage) => {
     };
 
     setSocket(ws);
-  }, [userId, connectionAttempts, onMessage]);
+  }, [userId, connectionAttempts]); // Removed onMessage from dependencies
 
   useEffect(() => {
     if (userId) {
@@ -77,7 +83,12 @@ export const useWebSocket = (onMessage) => {
         socket.close();
       }
     };
-  }, [userId, connect]);
+  }, [userId]); 
+
+  // Reset connection attempts when userId changes
+  useEffect(() => {
+    setConnectionAttempts(0);
+  }, [userId]);
 
   const sendMessage = useCallback((message) => {
     if (socket && socket.readyState === WebSocket.OPEN) {
