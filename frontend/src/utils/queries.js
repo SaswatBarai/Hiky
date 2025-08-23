@@ -64,7 +64,7 @@ export const useGetMessages = (roomId,enabled = false) => {
     queryKey:["getMessages",roomId],
     queryFn:() => getMessages(roomId,1,20),
     enabled:enabled && !!roomId,
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 60,
   })
 }
 
