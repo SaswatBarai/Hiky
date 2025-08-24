@@ -1,4 +1,5 @@
 import mongoose, { Schema } from 'mongoose';
+import Room from './room.model.js';
 
 const messageSchema = new Schema({
     roomId: {
@@ -304,5 +305,35 @@ messageSchema.statics.markAllAsDelivered = function(roomId,userId){
         }
     )
 }
+
+//after user come online we will mark delivered message
+messageSchema.statics.markMessagesAsDeliveredOnUserOnline = async function(userId){
+    //we have to find all room in which he is participant first
+
+    const rooms = await Room.find(
+        {
+            participants: userId
+        }
+    )
+    return this.updateMany(
+        {
+            roomId:{
+                $in: rooms.map(r => r._id)
+            },
+            isDeleted: false,
+            'deliveredTo.userId': { $ne: userId }
+        },
+        {
+            $addToSet: {
+                deliveredTo: {
+                    userId,
+                    deliveredAt: new Date()
+                }
+            }
+        }
+    )
+}
+
+
 const Message = mongoose.model('Message', messageSchema);
 export default Message;
