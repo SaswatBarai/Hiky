@@ -81,8 +81,13 @@ function ChatHome() {
               if (optimisticIndex !== -1) {
                 const updated = [...prev];
                 // Replace optimistic message with real one, keeping showDeliveryStatus: true
-                updated[optimisticIndex] = { ...newMsg, showDeliveryStatus: true };
-                console.log("Replaced optimistic message with real message");
+                updated[optimisticIndex] = { 
+                  ...newMsg, 
+                  pending: false,
+                  delivered: true,
+                  showDeliveryStatus: true 
+                };
+                console.log("Replaced optimistic message with real message, delivered=true");
                 return updated;
               }
             }
@@ -287,26 +292,24 @@ function ChatHome() {
       showDeliveryStatus: true // Show delivery status for new messages
     };
 
-    // Add optimistic message immediately
     setMessages(prev => [...prev, optimisticMessage]);
     setNewMessage("");
     // sendTypingIndicator(selectedChat, false);
 
     // Send via WebSocket
     const success = sendChatMessage(selectedChat, messageText);
-    // if(success){
-    //   // Mark as delivered if WebSocket send succeeded
-    //   setMessages(prev =>
-    //     prev.map(msg =>
-    //       msg.id === tempId
-    //         ? { ...msg, pending: false, delivered: true }
-    //         : msg
-    //     )
-    //   );
-    // }
+    if(success){
+      console.log("Message sent successfully with tempId:", tempId);
+      setMessages(prevMessages => 
+        prevMessages.map(msg => 
+          msg.id === tempId 
+            ? { ...msg, pending: false, delivered: true, showDeliveryStatus: true }
+            : msg
+        )
+      );
+    }
     
     if (!success) {
-      // Mark as failed if WebSocket send failed
       setMessages(prev => 
         prev.map(msg => 
           msg.id === tempId 
