@@ -7,6 +7,7 @@ import Message from "../models/message.model.js";
 const clients = new Map(); // userId -> websocket connection
 const userRooms = new Map(); // userId -> Set of roomIds
 const roomParticipants = new Map(); // roomId -> Set of userIds
+const joinedRoomParticipants = new Map(); // roomId -> Set of userIds who have joined
 const typingUsers = new Map(); // userId -> roomId
 const onlineUsers = new Set(); // Set of online userIds
 const offlineMessageQueue = new Map(); // userId -> Array of pending messages
@@ -81,6 +82,12 @@ const initializeWebSocket = (server) => {
                             userRooms.set(userId, new Set());
                         }
                         userRooms.get(userId).add(roomId);
+
+                        if(!joinedRoomParticipants.has(roomId)){
+                            joinedRoomParticipants.set(roomId, new Set());
+                        }
+                        joinedRoomParticipants.get(roomId).add(userId);
+
 
                         ws.send(JSON.stringify({
                             type: "joinedRoom",
@@ -164,6 +171,7 @@ const initializeWebSocket = (server) => {
 
                         // Broadcast message to online room participants and queue for offline ones
                         await broadcastMessageToRoom(roomId, messageData, userId);
+                        await Message.markAllAsRead(roomId,userId); 
                         break;
                     }
 
