@@ -37,8 +37,10 @@ export const useWebSocket = (onMessage) => {
       try {
         const data = JSON.parse(event.data);
         if (onMessageRef.current) {
+          console.log(onMessageRef.current)
           onMessageRef.current(data);
         }
+        console.log('WebSocket message receivedgiugjgjhg:', data);
       } catch (error) {
         console.error('Error parsing WebSocket message:', error);
       }
@@ -133,14 +135,6 @@ export const useWebSocket = (onMessage) => {
     });
   }, [sendMessage, userId]);
 
-  const markAsRead = useCallback((roomId) => {
-    return sendMessage({
-      type: 'markAsRead',
-      roomId,
-      userId
-    });
-  }, [sendMessage, userId]);
-
   return {
     socket,
     isConnected,
@@ -149,7 +143,6 @@ export const useWebSocket = (onMessage) => {
     leaveRoom,
     sendChatMessage,
     sendTypingIndicator,
-    markAsRead,
     connectionAttempts
   };
 };

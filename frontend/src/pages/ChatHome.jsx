@@ -156,8 +156,6 @@ function ChatHome() {
     joinRoom,
     leaveRoom,
     sendChatMessage,
-    sendTypingIndicator,
-    markAsRead
   } = useWebSocket(handleWebSocketMessage);
 
   const { data, error, isError } = usegetRooms();
@@ -185,11 +183,9 @@ function ChatHome() {
     }
 
     // Join new room
-    joinRoom(selectedChat);
-    
+   joinRoom(selectedChat); 
     // Mark messages as read after a short delay
     const markReadTimer = setTimeout(() => {
-      markAsRead(selectedChat);
       // Also update local unread count
       queryClient.setQueryData(["getRooms"], (oldData) => {
         if (!oldData?.rooms) return oldData;
@@ -210,13 +206,8 @@ function ChatHome() {
     return () => {
       clearTimeout(markReadTimer);
     };
-  }, [selectedChat, isConnected, joinRoom, leaveRoom, markAsRead, queryClient]);
+  }, [selectedChat, isConnected, joinRoom, leaveRoom, queryClient]);
 
-
-
-
-
-  // Format date for separators
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     const today = new Date();
@@ -299,10 +290,20 @@ function ChatHome() {
     // Add optimistic message immediately
     setMessages(prev => [...prev, optimisticMessage]);
     setNewMessage("");
-    sendTypingIndicator(selectedChat, false);
+    // sendTypingIndicator(selectedChat, false);
 
     // Send via WebSocket
     const success = sendChatMessage(selectedChat, messageText);
+    // if(success){
+    //   // Mark as delivered if WebSocket send succeeded
+    //   setMessages(prev =>
+    //     prev.map(msg =>
+    //       msg.id === tempId
+    //         ? { ...msg, pending: false, delivered: true }
+    //         : msg
+    //     )
+    //   );
+    // }
     
     if (!success) {
       // Mark as failed if WebSocket send failed
@@ -315,7 +316,7 @@ function ChatHome() {
       );
       notify("Failed to send message. WebSocket not connected.", "error");
     }
-  }, [newMessage, selectedChat, isConnected, sendChatMessage, sendTypingIndicator, notify]);
+  }, [newMessage, selectedChat, isConnected, sendChatMessage, notify]);
 
   //Handle typing indicator 
   const handleTyping = useCallback((value) => {
@@ -328,15 +329,15 @@ function ChatHome() {
     }
 
     if (value.trim()) {
-      sendTypingIndicator(selectedChat, true);
+      // sendTypingIndicator(selectedChat, true);
       const timeout = setTimeout(() => {
-        sendTypingIndicator(selectedChat, false);
+        // sendTypingIndicator(selectedChat, false);
       }, 3000);
       setTypingTimeout(timeout);
     } else {
-      sendTypingIndicator(selectedChat, false);
+      // sendTypingIndicator(selectedChat, false);
     }
-  }, [selectedChat, isConnected, sendTypingIndicator, typingTimeout]);
+  }, [selectedChat, isConnected, typingTimeout]);
 
   //clean up typing timeout on unmount
   useEffect(() => {
@@ -353,7 +354,8 @@ function ChatHome() {
   // Structure room data
   let structureData = null;
   if (data && data.success && data.rooms?.length > 0) {
-    structureData = data.rooms.map((room) => {
+    structureData = data.rooms.map(
+      (room) => {
       let name, avatar, otherUserId = null;
       if (room.roomType === "private") {
         const otherUser = room.participants.find((x) => x._id !== userId);

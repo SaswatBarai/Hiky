@@ -65,6 +65,8 @@ export const useGetMessages = (roomId,enabled = false) => {
     queryFn:() => getMessages(roomId,1,20),
     enabled:enabled && !!roomId,
     staleTime: 1000 * 60,
+    refetchInterval: 1000 * 30,
+    refetchIntervalInBackground:true
   })
 }
 
