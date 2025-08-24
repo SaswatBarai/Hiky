@@ -119,6 +119,7 @@ const messageSchema = new Schema({
 messageSchema.index({ roomId: 1, createdAt: -1 });
 messageSchema.index({ createdAt: -1 });
 messageSchema.index({ roomId: 1, isDeleted: 1 });
+messageSchema.index({"readBy.userId": 1});
 
 // Virtual to check if message is read by specific user
 messageSchema.virtual('isReadBy').get(function() {
@@ -284,5 +285,24 @@ messageSchema.statics.markAllAsRead = function(roomId, userId) {
     );
 };
 
+messageSchema.statics.markAllAsDelivered = function(roomId,userId){
+    return this.updateMany(
+        {
+            roomId,
+            senderId: { $ne: userId },
+            isDeleted: false,
+            'deliveredTo.userId': { $ne: userId }
+            
+        },
+        {
+            $addToSet:{
+                deliveredTo:{
+                    userId,
+                    deliveredAt: new Date()
+                }
+            }
+        }
+    )
+}
 const Message = mongoose.model('Message', messageSchema);
 export default Message;
