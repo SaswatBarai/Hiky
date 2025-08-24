@@ -101,6 +101,8 @@ export const useWebSocket = (onMessage) => {
     return false;
   }, [socket]);
 
+  //Why we using checkFriendOnline ? because we need to check if a friend is online 
+
   const joinRoom = useCallback((roomId) => {
     return sendMessage({
       type: 'joinRoom',

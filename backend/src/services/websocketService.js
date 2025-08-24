@@ -25,8 +25,8 @@ const initializeWebSocket = (server) => {
         ws.on("message", async (data) => {
             try {
                 const message = JSON.parse(data.toString());
-                const { type, userId, roomId, content, participants } = message;
-                
+                const { type, userId, roomId, content, friendId } = message;
+
                 currentUserId = userId;
 
                 switch (type) {
@@ -66,8 +66,12 @@ const initializeWebSocket = (server) => {
                         // Send any pending offline messages
                         await deliverOfflineMessages(userId);
 
-                        // Broadcast online status to friends
+                        // Send current online status of all friends to this user
+                        await sendCurrentOnlineStatus(userId, ws);
+
+                        // Broadcast this user's online status to friends
                         await broadcastOnlineStatus(userId, wss);
+                        await Message.markMessagesAsDeliveredOnUserOnline(userId);
                         break;
                     }
 
@@ -369,6 +373,33 @@ async function deliverOfflineMessages(userId) {
             // Clear the queue
             offlineMessageQueue.delete(userId);
         }
+    }
+}
+
+// Send current online status of all friends to a newly connected user
+async function sendCurrentOnlineStatus(userId, ws) {
+    try {
+        const user = await User.findById(userId).populate('friend', 'username name profileImage');
+        if (!user || !user.friend) return;
+
+        // Check which friends are currently online and send their status
+        user.friend.forEach(friend => {
+            const friendId = friend._id.toString();
+            if (onlineUsers.has(friendId)) {
+                ws.send(JSON.stringify({
+                    type: "friendOnline",
+                    userId: friendId,
+                    user: {
+                        id: friendId,
+                        username: friend.username,
+                        name: friend.name,
+                        profileImage: friend.profileImage
+                    }
+                }));
+            }
+        });
+    } catch (error) {
+        console.error("Error sending current online status:", error);
     }
 }
 

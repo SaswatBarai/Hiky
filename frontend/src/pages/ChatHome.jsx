@@ -41,6 +41,11 @@ function ChatHome() {
   const prevSelectedChatRef = useRef(null);
   const queryClient = useQueryClient();
 
+  // // Debug effect to track online users
+  // useEffect(() => {
+  //   console.log("Online users updated:", Array.from(onlineUsers));
+  // }, [onlineUsers]);
+
   // Stable WebSocket message handler with useCallback and proper dependencies
   const handleWebSocketMessage = useCallback((data) => {
     console.log("Received WebSocket message:", data);
@@ -119,11 +124,13 @@ function ChatHome() {
         break;
 
       case "friendOnline":
+        console.log("Friend came online:", data.userId, data.user?.username);
         setOnlineUsers(prev => new Set([...prev, data.userId]));
         notify(`${data.user?.username || "Someone"} is online`, "info");
         break;
 
       case "friendOffline":
+        console.log("Friend went offline:", data.userId);
         setOnlineUsers(prev => {
           const updated = new Set(prev);
           updated.delete(data.userId);
@@ -135,6 +142,14 @@ function ChatHome() {
       case "registered":
         console.log("Successfully registered to WebSocket");
         break;
+
+      // case "initialOnlineStatus":
+      //   // Handle bulk online status update when connecting
+      //   if (data.onlineUsers && Array.isArray(data.onlineUsers)) {
+      //     setOnlineUsers(new Set(data.onlineUsers));
+      //     console.log("Received initial online status for users:", data.onlineUsers);
+      //   }
+      //   break;
 
       case "joinedRoom":
         console.log(`Joined room ${data.roomId} successfully`);
@@ -391,6 +406,18 @@ function ChatHome() {
   const chats = structureData || [];
   const selectedChatInfo = chats.find((c) => c.id === selectedChat);
 
+  // Debug effect to track online users and chats relationship
+  // useEffect(() => {
+  //   if (chats.length > 0) {
+  //     console.log("Chats and online status debug:", chats.map(chat => ({ 
+  //       name: chat.name, 
+  //       otherUserId: chat.otherUserId, 
+  //       isOnline: chat.otherUserId && onlineUsers.has(chat.otherUserId),
+  //       roomType: chat.roomType
+  //     })));
+  //   }
+  // }, [onlineUsers, chats]);
+
   // WhatsApp-style background SVG (encoded)
   const whatsappBgPattern = `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23075E54' fill-opacity='0.05'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`;
 
@@ -444,7 +471,9 @@ function ChatHome() {
                 key={chat.id}
                 className={`flex items-center p-3 hover:bg-green-50 dark:hover:bg-green-900/20 cursor-pointer transition-colors ${selectedChat === chat.id ? "bg-green-100 dark:bg-green-900/30" : ""
                   }`}
-                onClick={() => setSelectedChat(chat.id)}
+                onClick={() => {
+                  setSelectedChat(chat.id);
+                }}
               >
                 <div className="relative">
                   <Avatar className="size-12 mr-3">
