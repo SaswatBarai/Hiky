@@ -17,8 +17,10 @@ import {
   Smartphone,
   HeadphonesIcon
 } from 'lucide-react';
+import {useNavigate} from "react-router-dom"
 
 export default function Landing() {
+  const navigate = useNavigate();
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-background to-green-50/30 dark:from-background dark:via-background dark:to-muted/20 text-foreground">
       {/* Background Effects */}
@@ -27,7 +29,9 @@ export default function Landing() {
       {/* Header */}
       <header className="max-w-7xl mx-auto px-6 py-6 flex items-center justify-between z-10 relative">
         <div className="flex items-center gap-3">
-          <HikyLogo width={48} height={48} className="rounded-lg" />
+          <HikyLogo 
+          onClick={() => navigate("/")}
+          width={48} height={48} className="rounded-lg" />
           <h1 className="text-xl font-bold text-green-600 dark:text-green-500">Hiky</h1>
         </div>
         <nav className="hidden md:flex items-center gap-8">
@@ -65,7 +69,9 @@ export default function Landing() {
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12">
-            <Button size="lg" className="bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-600 text-white px-8 py-4 text-lg">
+            <Button
+            onClick={() => navigate("/login")}
+            size="lg" className="bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-600 text-white px-8 py-4 text-lg">
               Try Hiky Now
               <ArrowRight className="w-5 h-5 ml-2" />
             </Button>
