@@ -1,25 +1,57 @@
-import {useSelector} from "react-redux"
-import {useNavigate} from "react-router-dom"
+import { useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
+
+// Component to protect routes for authenticated users
+// export const ProtectedRoute = ({ children }) => {
+//     const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
+//     const navigate = useNavigate();
+    
+//     useEffect(() => {
+//         if (!isAuthenticated) {
+//             navigate("/login");
+//         }
+//     }, [isAuthenticated, navigate]);
+    
+//     return isAuthenticated ? children : null;
+// };
+
+// // Component to protect routes for unauthenticated users (guests)
+// export const GuestRoute = ({ children }) => {
+//     const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
+//     const navigate = useNavigate();
+    
+//     useEffect(() => {
+//         if (isAuthenticated) {
+//             navigate("/");
+//         }
+//     }, [isAuthenticated, navigate]);
+    
+//     return !isAuthenticated ? children : null;
+// };
 
 
-// i want wrapper to be a component that wraps around the children and checks if the user is logged in or not
-
-export const Protect = ({children}) => {
+export const Protect = ({ children}) => {
     const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
-    const isVerified = useSelector((state) => state.auth.isVerified);
     const navigate = useNavigate();
 
-    //if user is Authenticte but not verified i will do nothing
-    if (isAuthenticated && !isVerified) {
-        return children;
-    }
-    else if(!isAuthenticated) {
-        navigate("/login");
-        return null;
-    }
+    useEffect(() => {
+        if (!isAuthenticated) {
+            navigate("/");
+        }
+    }, [isAuthenticated, navigate]);
 
-    if(isAuthenticated && isVerified) {
-        return children;
-    }
-    
+    return isAuthenticated ? children : null;
+}
+
+export const Guest = ({ children}) => {
+    const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
+    const navigate = useNavigate();
+    useEffect(() => {
+        if (isAuthenticated) {
+            navigate("/");
+        }
+    }, [isAuthenticated, navigate]);
+
+    return !isAuthenticated ? children : null;
 }
