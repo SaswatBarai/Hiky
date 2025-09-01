@@ -865,9 +865,9 @@ function ChatHome() {
             </div>
           </>
         ) : (
-          /* Welcome Screen */
+          /* Enhanced Welcome Screen */
           <div
-            className="flex-grow flex flex-col items-center justify-center text-center p-6 h-full"
+            className="flex-grow flex flex-col items-center justify-center text-center p-6 h-full relative overflow-hidden"
             style={{
               backgroundImage: isDark
                 ? "radial-gradient(circle at 50% 50%, rgba(13, 30, 30, 0.6), rgba(0, 0, 0, 0.9)), linear-gradient(to bottom, #0b1a1a, #0a1212)"
@@ -878,14 +878,112 @@ function ChatHome() {
               color: isDark ? "#e0f7e0" : "#1a5d1a",
             }}
           >
-            <div className="max-w-md space-y-4">
-              <h2 className="text-2xl font-bold text-green-600 dark:text-green-400">Welcome to Hiky</h2>
-              <p className="text-muted-foreground">
-                Select a chat from the sidebar to start messaging, or create a new chat.
-              </p>
-              <p className="text-sm text-muted-foreground">
-                Status: {isConnected ? "Connected" : "Connecting..."}
-              </p>
+            {/* Animated background elements */}
+            <div className="absolute inset-0 overflow-hidden">
+              {[...Array(6)].map((_, i) => (
+                <div
+                  key={i}
+                  className="absolute w-2 h-2 bg-green-500/20 rounded-full animate-pulse"
+                  style={{
+                    left: `${Math.random() * 100}%`,
+                    top: `${Math.random() * 100}%`,
+                    animationDelay: `${Math.random() * 3}s`,
+                    animationDuration: `${2 + Math.random() * 2}s`,
+                  }}
+                />
+              ))}
+            </div>
+
+            {/* Main content */}
+            <div className="relative z-10 max-w-2xl space-y-8">
+              {/* Logo/Icon section */}
+              <div className="flex justify-center mb-6">
+                <div className="relative">
+                  <div className="w-24 h-24 bg-green-600/10 rounded-full flex items-center justify-center backdrop-blur-sm border border-green-500/20">
+                    <svg
+                      className="w-12 h-12 text-green-600"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                      />
+                    </svg>
+                  </div>
+                  <div className="absolute -inset-2 bg-green-500/5 rounded-full blur-xl animate-pulse"></div>
+                </div>
+              </div>
+
+              {/* Welcome text */}
+              <div className="space-y-4">
+                <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-green-600 via-green-500 to-emerald-500 bg-clip-text text-transparent">
+                  Welcome to Hiky
+                </h1>
+                <p className="text-xl text-muted-foreground max-w-lg mx-auto leading-relaxed">
+                  Your gateway to seamless conversations and meaningful connections
+                </p>
+              </div>
+
+              {/* Feature highlights */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
+                <div className="bg-white/10 dark:bg-black/10 backdrop-blur-sm rounded-xl p-6 border border-green-500/10 hover:border-green-500/20 transition-all duration-300 hover:scale-105">
+                  <div className="w-12 h-12 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                  </div>
+                  <h3 className="font-semibold text-green-700 dark:text-green-300 mb-2">Connect Instantly</h3>
+                  <p className="text-sm text-muted-foreground">Start conversations with friends and colleagues in real-time</p>
+                </div>
+
+                <div className="bg-white/10 dark:bg-black/10 backdrop-blur-sm rounded-xl p-6 border border-green-500/10 hover:border-green-500/20 transition-all duration-300 hover:scale-105">
+                  <div className="w-12 h-12 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                  </div>
+                  <h3 className="font-semibold text-green-700 dark:text-green-300 mb-2">Secure & Private</h3>
+                  <p className="text-sm text-muted-foreground">Your conversations are protected with end-to-end encryption</p>
+                </div>
+
+                <div className="bg-white/10 dark:bg-black/10 backdrop-blur-sm rounded-xl p-6 border border-green-500/10 hover:border-green-500/20 transition-all duration-300 hover:scale-105">
+                  <div className="w-12 h-12 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                  </div>
+                  <h3 className="font-semibold text-green-700 dark:text-green-300 mb-2">Lightning Fast</h3>
+                  <p className="text-sm text-muted-foreground">Experience instant messaging with our optimized infrastructure</p>
+                </div>
+              </div>
+
+              {/* Call to action */}
+              <div className="mt-12 space-y-4">
+                <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                  <button className="px-8 py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+                    Start New Chat
+                  </button>
+                  <button className="px-8 py-3 border-2 border-green-600/20 hover:border-green-600/40 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-xl font-medium transition-all duration-300 transform hover:-translate-y-1">
+                    Join Group
+                  </button>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Status: <span className={`font-medium ${isConnected ? 'text-green-600' : 'text-yellow-600'}`}>
+                    {isConnected ? "🟢 Connected" : "🟡 Connecting..."}
+                  </span>
+                </p>
+              </div>
+
+              {/* Footer text */}
+              <div className="mt-16 text-center">
+                <p className="text-xs text-muted-foreground/70">
+                  Select a chat from the sidebar to start messaging
+                </p>
+              </div>
             </div>
           </div>
         )}

@@ -54,12 +54,17 @@ export function NavMain({
             onClick= {() => navigate(item.url)}
             className="group/collapsible"
           >
-            <SidebarMenuItem>
-                <SidebarMenuButton tooltip={item.title}>
-                  {item.icon && <item.icon />}
-                  <span>{item.title}</span>
+            <SidebarMenuItem className="text-center">
+                <SidebarMenuButton tooltip={item.title}
+                className="text-center "
+                >
+                  <div className="flex items-center">
+                    {item.icon && <item.icon className="text-green-400 w-6 h-6 mr-10 " />}
+                  </div>
+                  <div className="text-center">{item.title}</div>
                 </SidebarMenuButton>
-              <SidebarMenuButton>
+                {/* we will make unclickable */}
+              <SidebarMenuButton className="cursor-not-allowed pointer-events-none opacity-50">
               </SidebarMenuButton>
             </SidebarMenuItem>
           </Collapsible>
