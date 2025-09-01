@@ -71,6 +71,8 @@ const initializeWebSocket = (server) => {
 
                         // Broadcast this user's online status to friends
                         await broadcastOnlineStatus(userId, wss);
+                        
+                        // Mark messages as delivered when user comes online (only once per session)
                         await Message.markMessagesAsDeliveredOnUserOnline(userId);
                         break;
                     }
@@ -175,7 +177,9 @@ const initializeWebSocket = (server) => {
 
                         // Broadcast message to online room participants and queue for offline ones
                         await broadcastMessageToRoom(roomId, messageData, userId);
-                        await Message.markAllAsRead(roomId,userId); 
+                        
+                        // Mark messages as read for the sender's room (only once)
+                        await Message.markRoomMessagesAsReadOnOpen(userId, roomId);
                         break;
                     }
 
@@ -233,6 +237,11 @@ const initializeWebSocket = (server) => {
                         break;
                     }
 
+                    case "readReceipt" :{
+                        console.log("Read receipt event occurred for room:", roomId, "user:", userId);
+                        await Message.markRoomMessagesAsReadOnOpen(userId, roomId);
+                        break;
+                    }
                     default: {
                         ws.send(JSON.stringify({
                             type: "error",
