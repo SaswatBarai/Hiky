@@ -516,21 +516,8 @@ function ChatHome() {
   }
 
   const chats = structureData || [];
+  console.log("mark 1", structureData)
   const selectedChatInfo = chats.find((c) => c.id === selectedChat);
-
-  // Debug effect to track online users and chats relationship
-  // useEffect(() => {
-  //   if (chats.length > 0) {
-  //     console.log("Chats and online status debug:", chats.map(chat => ({ 
-  //       name: chat.name, 
-  //       otherUserId: chat.otherUserId, 
-  //       isOnline: chat.otherUserId && onlineUsers.has(chat.otherUserId),
-  //       roomType: chat.roomType
-  //     })));
-  //   }
-  // }, [onlineUsers, chats]);
-
-  // WhatsApp-style background SVG (encoded)
   const whatsappBgPattern = `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23075E54' fill-opacity='0.05'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`;
 
   return (

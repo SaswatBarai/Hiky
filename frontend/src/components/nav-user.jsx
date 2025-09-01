@@ -6,6 +6,8 @@ import {
   ChevronsUpDown,
   CreditCard,
   LogOut,
+  LogOutIcon,
+  Settings,
   Sparkles,
 } from "lucide-react";
 
@@ -53,7 +55,7 @@ export function NavUser({ user }) {
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-medium">{currentUser?.name}</span>
-                <span className="truncate text-xs">{currentUser.email}</span>
+                <span className="truncate text-xs">{currentUser?.email}</span>
               </div>
               <ChevronsUpDown className="ml-auto size-4" />
             </SidebarMenuButton>
@@ -72,15 +74,15 @@ export function NavUser({ user }) {
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-medium">{currentUser?.name}</span>
-                  <span className="truncate text-xs">{currentUser.email}</span>
+                  <span className="truncate text-xs">{currentUser?.email}</span>
                 </div>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem>
-                <Sparkles />
-                Upgrade to Pro
+                <Settings/>
+                Settings
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
@@ -100,7 +102,7 @@ export function NavUser({ user }) {
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem>
-              <LogOut />
+              <LogOutIcon/>
               Log out
             </DropdownMenuItem>
           </DropdownMenuContent>
