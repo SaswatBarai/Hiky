@@ -25,6 +25,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import {useSelector} from "react-redux"
 
 // : {
 //   user: {
@@ -36,6 +37,7 @@ import {
 
 export function NavUser({ user }) {
   const { isMobile } = useSidebar();
+  const currentUser = useSelector((state) => state?.auth?.user);
   return (
     <SidebarMenu>
       <SidebarMenuItem>
@@ -46,12 +48,12 @@ export function NavUser({ user }) {
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
               <Avatar className="h-8 w-8 ">
-                <AvatarImage src={user.avatar} className="rounded-full"  alt={user.name} />
+                <AvatarImage src={currentUser?.profileImage?.image} className="rounded-full"  alt={currentUser?.name} />
                 <AvatarFallback className="rounded-lg">CN</AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium">{user.name}</span>
-                <span className="truncate text-xs">{user.email}</span>
+                <span className="truncate font-medium">{currentUser?.name}</span>
+                <span className="truncate text-xs">{currentUser.email}</span>
               </div>
               <ChevronsUpDown className="ml-auto size-4" />
             </SidebarMenuButton>
@@ -65,12 +67,12 @@ export function NavUser({ user }) {
             <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="h-8 w-8">
-                  <AvatarImage src={user.avatar} alt={user.name} />
+                  <AvatarImage src={currentUser?.profileImage?.image} alt={user.name} />
                   <AvatarFallback className="rounded-lg">CN</AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">{user.name}</span>
-                  <span className="truncate text-xs">{user.email}</span>
+                  <span className="truncate font-medium">{currentUser?.name}</span>
+                  <span className="truncate text-xs">{currentUser.email}</span>
                 </div>
               </div>
             </DropdownMenuLabel>
