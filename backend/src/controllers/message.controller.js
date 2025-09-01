@@ -245,7 +245,7 @@ export const getUserRooms = async (req, res) => {
 
         // Calculate unread messages (messages after user's last seen)
         // For now, we'll use a simple approach - you can enhance this with a lastSeen field
-        const unreadCount = 0; // Implement based on your lastSeen logic
+        let  unreadCount = 0; // Implement based on your lastSeen logic
 
         unreadCount = await Message.countDocuments({
           roomId: room._id,
@@ -379,6 +379,7 @@ export const markMessagesAsRead = async (req, res) => {
 
     // Update user's last seen timestamp for this room
     // You can implement this based on your schema design
+    
     
     return res.status(200).json({
       success: true,

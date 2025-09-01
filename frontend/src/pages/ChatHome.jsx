@@ -505,6 +505,7 @@ function ChatHome() {
         participants: room.participants,
         otherUserId, // For private chats, store the other user's ID
         lastMessage: room.lastMessage?.content || "No messages yet",
+        unreadMessagesCount : room?.unreadCount,
         lastMessageTime: room.lastMessage?.createdAt || room.createdAt,
         time: new Date(room.lastMessage?.createdAt || room.createdAt).toLocaleTimeString([], {
           hour: '2-digit',
@@ -512,6 +513,17 @@ function ChatHome() {
         }),
         unread: room.unreadCount || 0,
       };
+    });
+  }
+
+  
+  const handleMarkAsReadn = (chatId, unreadCount) => {
+    if(!chatId || unreadCount === 0) return;
+    // Send read receipt via WebSocket
+    sendMessage({
+      type: "readReceipt",
+      roomId: chatId,
+      userId: userId
     });
   }
 
@@ -572,6 +584,7 @@ function ChatHome() {
                   }`}
                 onClick={() => {
                   setSelectedChat(chat.id);
+                  handleMarkAsReadn(chat.id,chat.unreadMessagesCount);
                 }}
               >
                 <div className="relative">
