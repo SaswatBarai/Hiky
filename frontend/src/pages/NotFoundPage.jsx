@@ -20,7 +20,7 @@ const NotFoundPage = () => {
     setIsLoadingQuote(true);
     try {
       const randomQuote = randomQuotes();
-      console.log("Random quote:", randomQuote);
+      console.log("Random quote:", randomQuote)  ;
       setQuote(randomQuote);
     } catch (error) {
       console.error('Error fetching quote:', error);
