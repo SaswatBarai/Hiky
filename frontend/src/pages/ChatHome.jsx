@@ -35,7 +35,7 @@ import { usegetRooms, useGetMessagesInfinite } from "../utils/queries";
 import { useWebSocket } from "../hooks/useWebSocket";
 import { useQueryClient } from "@tanstack/react-query";
 import { Badge } from "../components/ui/badge";
-import { UserPlus } from "@mynaui/icons-react";
+import { Spinner, UserPlus } from "@mynaui/icons-react";
 import {useCreatePrivateRoom} from "../utils/queries.js"
 
 function ChatHome() {
@@ -62,9 +62,9 @@ function ChatHome() {
   const isRestoringScrollRef = useRef(false); // Track if we're in the middle of scroll restoration
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const addFriendRef = useRef();
-  const [friendMainInput, setFriendMainInput] = useState("");
+  // const [friendMainInput, setFriendMainInput] = useState("");
+  const friendMainInput= useRef("");
   const createPrivateRoomMutation = useCreatePrivateRoom();
-
 
   const handleWebSocketMessage = useCallback(
     (data) => {
@@ -612,31 +612,49 @@ function ChatHome() {
   }
 
   const handleAddFriendSubmit = () => {
-    if (!friendMainInput.trim()) {
-      notify("Please enter a valid username or email", "error");
+    if (!friendMainInput?.current?.value?.trim()) {
+      console.log("Attempting to show notification for empty input");
+      notify("Please enter a valid username or email", "top-center", "error");
       return;
     }
     
+    console.log("Starting friend addition process");
+    
     // Implement the logic to add a friend using friendMainInput
     const formData = {
-      mainInput: friendMainInput.trim(),
+      mainInput: friendMainInput?.current?.value?.trim(),
       roomType: "private"
     };
+    
+    console.log("Form data:", formData);
     
     createPrivateRoomMutation.mutate(
       formData,
       {
         onSuccess:(data) => {
-          notify("Your Friend Added Successfully", "success");
+          console.log("Success data:", data);
+          console.log("Attempting to show success notification");
+          notify("Your Friend Added Successfully", "top-center", "success");
           setIsDialogOpen(false);
-          setFriendMainInput(""); // Clear the input
+          if (friendMainInput.current) {
+            friendMainInput.current.value = ""; // Clear the input
+          }
         },
         onError:(error) => {
-          notify(
-            error?.response?.data?.message ||
-              "Failed to add friend. Please try again.",
-            "error"
-          );
+          console.log("Error details:", error);
+          console.log("Error response:", error?.response);
+          console.log("Error response data:", error?.response?.data);
+          
+          let errorMessage = "Failed to add friend. Please try again.";
+          
+          if (error?.response?.data?.message) {
+            errorMessage = error.response.data.message;
+          } else if (error?.message) {
+            errorMessage = error.message;
+          }
+          
+          console.log("Attempting to show error notification:", errorMessage);
+          notify(errorMessage, "top-center", "error");
         }
       }
     )
@@ -681,19 +699,20 @@ function ChatHome() {
                       </AlertDialogTitle>
                       <div>
                         <Input
-                        onChange={(e) => setFriendMainInput(e.target.value)}
-                        value={friendMainInput}
+                        // onChange={(e) => }
+                        // value={friendMainInput}
+                        ref={friendMainInput}
                         placeholder="Enter your friend's username or email" />
                       </div>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                       <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction
+                      <Button
                       onClick={handleAddFriendSubmit}
                       disabled={createPrivateRoomMutation.isPending}
                       >
-                        {createPrivateRoomMutation.isPending ? "Adding..." : "Add Friend"}
-                      </AlertDialogAction>
+                        {createPrivateRoomMutation.isPending ? <Spinner className="animate-spin"/> : "Add Friend"}
+                      </Button>
                     </AlertDialogFooter>
                   </AlertDialogContent>
                 </AlertDialog>
