@@ -1,11 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { motion, useAnimation } from 'framer-motion';
-import {useNavigate} from "react-router-dom"
+import { useNavigate } from "react-router-dom";
 import { Button } from '@/components/ui/button';
+import { HikyLogo } from '@/components/hiky-logo';
+import { useTheme } from '@/components/theme-provider';
+import { Home, MessageCircle, ArrowLeft, Search } from 'lucide-react';
 
 const NotFoundPage = () => {
   const [isLoaded, setIsLoaded] = useState(false);
   const navigate = useNavigate();
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoaded(true), 100);
@@ -17,54 +22,54 @@ const NotFoundPage = () => {
     visible: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.05
+        staggerChildren: 0.1,
+        delayChildren: 0.2
       }
     }
   };
 
   const itemVariants = {
-    hidden: { y: 20, opacity: 0 },
+    hidden: { y: 30, opacity: 0 },
     visible: {
       y: 0,
       opacity: 1,
+      transition: {
+        duration: 0.6,
+        ease: "easeOut"
+      }
     }
   };
 
-  const robotVariants = {
+  const floatVariants = {
     float: {
-      y: [0, -10, 0],
-      transition: { duration: 3, repeat: Infinity, ease: "easeInOut" }
-    },
-    wobble: {
-      rotate: [0, 2, -2, 2, -2, 0],
-      transition: { duration: 5, repeat: Infinity, ease: "easeInOut" }
+      y: [0, -8, 0],
+      transition: { 
+        duration: 4, 
+        repeat: Infinity, 
+        ease: "easeInOut" 
+      }
     }
   };
 
   const glitchVariants = {
     glitch: {
       x: [0, 2, -2, 1, -1, 0],
-      opacity: [1, 0.5, 0.8, 0.3, 0.7, 1],
+      opacity: [1, 0.8, 0.9, 0.7, 0.95, 1],
       transition: {
-        duration: 0.3,
+        duration: 0.5,
         repeat: Infinity,
         repeatType: "reverse",
-        repeatDelay: 2
+        repeatDelay: 3
       }
     }
   };
 
-  const GlitchText = ({ text }) => {
+  const GlitchText = ({ text, className = "" }) => {
     const chars = text.split('');
-    const controls = useAnimation();
-
-    useEffect(() => {
-      controls.start('glitch');
-    }, [controls]);
 
     return (
       <motion.div
-        className="inline-block relative text-foreground/70 font-mono"
+        className={`inline-block ${className}`}
         variants={containerVariants}
         initial="hidden"
         animate="visible"
@@ -74,7 +79,7 @@ const NotFoundPage = () => {
             key={index}
             variants={itemVariants}
             className="inline-block"
-            style={{ filter: char === ' ' ? 'none' : 'url(#glitch)' }}
+            animate={index % 2 === 0 ? glitchVariants.glitch : {}}
           >
             {char}
           </motion.span>
@@ -83,70 +88,71 @@ const NotFoundPage = () => {
     );
   };
   
-  const ButtonGroup = () => (
-    <div className="flex flex-col sm:flex-row gap-4">
-      <motion.div 
-        whileHover={{ scale: 1.05 }} 
-        whileTap={{ scale: 0.95 }}
-        className="w-full sm:w-auto"
-      >
+  const ActionButtons = () => (
+    <motion.div 
+      className="flex flex-col sm:flex-row gap-4 mt-8"
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+    >
+      <motion.div variants={itemVariants}>
         <Button 
           onClick={() => navigate("/")} 
-          className="w-full sm:w-auto h-12 px-8 rounded-lg font-medium bg-primary hover:bg-primary/90 shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5"
+          className="group w-full sm:w-auto h-12 px-6 bg-green-600 hover:bg-green-700 text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
         >
-          <div className="flex items-center gap-2">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-            </svg>
-            Go Home
-          </div>
+          <Home className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform duration-200" />
+          Go Home
         </Button>
       </motion.div>
-      <motion.div 
-        whileHover={{ scale: 1.05 }} 
-        whileTap={{ scale: 0.95 }}
-        className="w-full sm:w-auto"
-      >
+      
+      <motion.div variants={itemVariants}>
         <Button 
           variant="outline" 
-          className="w-full sm:w-auto h-12 px-8 rounded-lg font-medium border-border/60 hover:bg-muted/80 shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5"
+          onClick={() => navigate(-1)}
+          className="group w-full sm:w-auto h-12 px-6 border-2 border-green-600/20 hover:border-green-600/40 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-xl font-medium transition-all duration-300 transform hover:-translate-y-1"
         >
-          <div className="flex items-center gap-2">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-            </svg>
-            Contact Support
-          </div>
+          <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform duration-200" />
+          Go Back
         </Button>
       </motion.div>
-    </div>
+      
+      <motion.div variants={itemVariants}>
+        <Button 
+          variant="outline"
+          className="group w-full sm:w-auto h-12 px-6 border-2 border-muted-foreground/20 hover:border-green-600/40 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-xl font-medium transition-all duration-300 transform hover:-translate-y-1"
+        >
+          <MessageCircle className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform duration-200" />
+          Contact Support
+        </Button>
+      </motion.div>
+    </motion.div>
   );
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-br from-background via-muted/30 to-background text-foreground font-sans relative overflow-hidden">
-      {/* Enhanced background with better gradient */}
-      <div className="absolute inset-0 z-0">
-        <div className="w-full h-full bg-[radial-gradient(circle_at_20%_80%,rgba(120,119,198,0.1),transparent_50%),radial-gradient(circle_at_80%_20%,rgba(255,119,198,0.08),transparent_50%),radial-gradient(circle_at_40%_40%,rgba(120,219,226,0.08),transparent_50%)] opacity-60"></div>
+    <div className="min-h-screen bg-background relative overflow-hidden">
+      {/* Green gradient background */}
+      <div className="absolute inset-0">
+        <div className="absolute inset-0 bg-gradient-to-br from-green-50/50 via-background to-emerald-50/30 dark:from-green-950/20 dark:via-background dark:to-emerald-900/10" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(34,197,94,0.1),transparent_40%),radial-gradient(circle_at_70%_80%,rgba(16,185,129,0.08),transparent_40%)]" />
       </div>
-      <div className="absolute inset-0 z-10 bg-gradient-to-br from-transparent via-background/20 to-background/40"></div>
 
-      {/* Enhanced floating particles effect */}
-      <div className="absolute inset-0 z-5">
-        {[...Array(6)].map((_, i) => (
+      {/* Floating particles */}
+      <div className="absolute inset-0">
+        {[...Array(8)].map((_, i) => (
           <motion.div
             key={i}
-            className="absolute w-2 h-2 bg-primary/20 rounded-full"
+            className="absolute w-1 h-1 bg-green-500/30 rounded-full"
             style={{
               left: `${Math.random() * 100}%`,
               top: `${Math.random() * 100}%`,
             }}
             animate={{
-              y: [0, -30, 0],
-              opacity: [0.2, 0.8, 0.2],
-              scale: [1, 1.2, 1],
+              y: [0, -20, 0],
+              opacity: [0.3, 0.8, 0.3],
+              scale: [1, 1.5, 1],
             }}
             transition={{
-              duration: 3 + Math.random() * 2,
+              duration: 4 + Math.random() * 2,
               repeat: Infinity,
               delay: Math.random() * 2,
               ease: "easeInOut",
@@ -155,158 +161,265 @@ const NotFoundPage = () => {
         ))}
       </div>
 
-      <svg className="filter-svg">
-        <filter id="glitch">
-          <feTurbulence baseFrequency="0.05 0.05" numOctaves="2" result="turbulence" seed="2" />
-          <feDisplacementMap in="SourceGraphic" in2="turbulence" scale="5" xChannelSelector="R" yChannelSelector="G" />
-        </filter>
-      </svg>
-      
-      <main className="flex-1 flex items-center justify-center p-8 relative z-20">
-        <div className="flex flex-col md:flex-row items-center justify-center max-w-6xl w-full gap-16 md:gap-24">
-          <motion.div
-            className="flex-1 max-w-lg text-center md:text-left"
-            initial={{ opacity: 0, x: -50 }}
-            animate={{ opacity: isLoaded ? 1 : 0, x: isLoaded ? 0 : -50 }}
-            transition={{ duration: 0.8, ease: "easeOut" }}
-          >
-            {/* Enhanced 404 text with better gradient */}
-            <motion.div 
-              className="text-6xl md:text-8xl font-black mb-6 bg-gradient-to-r from-primary via-primary/80 to-primary/60 bg-clip-text text-transparent drop-shadow-lg"
-              animate={{ 
-                scale: [1, 1.02, 1],
-                filter: ["hue-rotate(0deg)", "hue-rotate(10deg)", "hue-rotate(0deg)"]
-              }}
-              transition={{ 
-                duration: 4, 
-                repeat: Infinity, 
-                ease: "easeInOut" 
-              }}
-            >
-              <GlitchText text="404" />
-            </motion.div>
+      <main className="relative z-10 min-h-screen flex items-center justify-center p-4">
+        <div className="flex flex-col lg:flex-row items-center justify-center max-w-6xl mx-auto gap-12 lg:gap-16">
+          
+          {/* Left side - Text content */}
+          <div className="flex-1 text-center lg:text-left max-w-lg">
             
-            <motion.h1
-              className="text-4xl md:text-6xl font-extrabold text-foreground mb-6 leading-tight"
+            {/* Logo Section */}
+            <motion.div
+              className="flex justify-center lg:justify-start mb-8"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: isLoaded ? 1 : 0, scale: isLoaded ? 1 : 0.8 }}
+              transition={{ duration: 0.8, ease: "easeOut" }}
+              variants={floatVariants}
+              whileInView="float"
+            >
+              <div className="relative">
+                {/* Custom green Hiky logo */}
+                <svg 
+                  width={120} 
+                  height={120} 
+                  viewBox="0 0 100 100" 
+                  xmlns="http://www.w3.org/2000/svg" 
+                  role="img" 
+                  aria-labelledby="logoTitle"
+                  className="drop-shadow-lg"
+                >
+                  <title id="logoTitle">Hiky Chat App Logo</title>
+
+                  <defs>
+                    {/* Green gradient for background */}
+                    <radialGradient id="greenLogoGradient" cx="50%" cy="50%" r="50%" fx="30%" fy="30%">
+                      <stop offset="0%" stopColor="#22C55E" />
+                      <stop offset="100%" stopColor="#15803D" />
+                    </radialGradient>
+
+                    {/* Drop shadow filter */}
+                    <filter id="greenShadow" x="-20%" y="-20%" width="140%" height="140%">
+                      <feDropShadow dx="0" dy="4" stdDeviation="4" floodColor="#000" floodOpacity="0.2"/>
+                    </filter>
+                  </defs>
+
+                  {/* Rounded square background with green gradient and shadow */}
+                  <rect 
+                    x="10" 
+                    y="10" 
+                    width="80" 
+                    height="80" 
+                    rx="20" 
+                    ry="20"
+                    fill="url(#greenLogoGradient)" 
+                    filter="url(#greenShadow)" 
+                  />
+
+                  {/* Chat tail */}
+                  <path d="M35,85 L48,95 L53,85 Z" fill="url(#greenLogoGradient)" />
+
+                  {/* Chat bubble icon and text */}
+                  <g transform="translate(0, 5)">
+                    {/* Chat icon above text */}
+                    <path
+                      d="M38 33 H62 A4 4 0 0 1 66 37 V47 A4 4 0 0 1 62 51 H38 A4 4 0 0 1 34 47 V37 A4 4 0 0 1 38 33 Z 
+                         M42 40 H58 M42 44 H58"
+                      stroke="white" 
+                      strokeWidth="2" 
+                      fill="none" 
+                      strokeLinecap="round"
+                    />
+
+                    {/* App name */}
+                    <text
+                      x="50" 
+                      y="65"
+                      fontFamily="Segoe UI, Arial, sans-serif"
+                      fontSize="16"
+                      fontWeight="600"
+                      fill="white"
+                      textAnchor="middle"
+                      dominantBaseline="middle"
+                    >
+                      Hiky
+                    </text>
+                  </g>
+                </svg>
+                <motion.div
+                  className="absolute -inset-4 bg-green-500/10 rounded-full blur-xl"
+                  animate={{
+                    scale: [1, 1.1, 1],
+                    opacity: [0.5, 0.8, 0.5],
+                  }}
+                  transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                />
+              </div>
+            </motion.div>
+
+            {/* 404 Error */}
+            <motion.div
+              className="mb-6"
+              initial={{ opacity: 0, y: 50 }}
+              animate={{ opacity: isLoaded ? 1 : 0, y: isLoaded ? 0 : 50 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+            >
+              <GlitchText 
+                text="404" 
+                className="text-7xl md:text-8xl font-black bg-gradient-to-r from-green-600 via-emerald-500 to-green-700 bg-clip-text text-transparent drop-shadow-lg" 
+              />
+            </motion.div>
+
+            {/* Main Heading */}
+            <motion.div
+              className="mb-8"
               variants={containerVariants}
               initial="hidden"
               animate="visible"
             >
-              {"Page not found".split(" ").map((word, index) => (
-                <span key={index} className="inline-block mr-3">
-                  <motion.span 
-                    variants={itemVariants}
-                    className="hover:text-primary transition-colors duration-300"
-                  >
-                    {word}
-                  </motion.span>
-                </span>
-              ))}
-            </motion.h1>
-            
-            <motion.p
-              className="text-muted-foreground text-lg mb-10 leading-relaxed max-w-md"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: isLoaded ? 1 : 0, y: isLoaded ? 0 : 20 }}
-              transition={{ delay: 0.6, duration: 0.6 }}
-            >
-              The page you are looking for might have been removed, had its name changed, or is temporarily unavailable.
-            </motion.p>
-            
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: isLoaded ? 1 : 0, y: isLoaded ? 0 : 20 }}
-              transition={{ delay: 0.8, duration: 0.6 }}
-            >
-              <ButtonGroup />
+              <motion.h1 
+                variants={itemVariants}
+                className="text-3xl md:text-4xl font-bold text-foreground mb-4"
+              >
+                Oops! Page Not Found
+              </motion.h1>
+              <motion.p 
+                variants={itemVariants}
+                className="text-lg text-muted-foreground leading-relaxed"
+              >
+                The page you're looking for seems to have wandered off into the digital void.
+              </motion.p>
             </motion.div>
-          </motion.div>
 
+            {/* Action Buttons */}
+            <ActionButtons />
+
+            {/* Help Text */}
+            <motion.div
+              className="mt-8 text-center lg:text-left"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: isLoaded ? 0.7 : 0 }}
+              transition={{ duration: 0.6, delay: 1 }}
+            >
+              <p className="text-sm text-muted-foreground">
+                Need help? Check our{" "}
+                <a href="#" className="text-green-500 hover:text-green-600 transition-colors duration-200 underline">
+                  documentation
+                </a>{" "}
+                or{" "}
+                <a href="#" className="text-green-500 hover:text-green-600 transition-colors duration-200 underline">
+                  contact support
+                </a>
+              </p>
+            </motion.div>
+          </div>
+
+          {/* Right side - Robot illustration */}
           <motion.div
             className="flex-1 flex justify-center items-center"
             initial={{ opacity: 0, x: 50 }}
             animate={{ opacity: isLoaded ? 1 : 0, x: isLoaded ? 0 : 50 }}
-            transition={{ duration: 0.8, ease: "easeOut", delay: 0.2 }}
+            transition={{ duration: 0.8, ease: "easeOut", delay: 0.4 }}
           >
             <div className="relative">
-              {/* Enhanced robot with better styling */}
               <motion.svg
-                width="350"
-                height="350"
+                width="400"
+                height="400"
                 viewBox="0 0 320 320"
-                className="text-muted-foreground drop-shadow-xl"
+                className="text-muted-foreground/70 drop-shadow-xl"
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
-                variants={robotVariants}
-                animate={["float", "wobble"]}
+                variants={floatVariants}
+                animate="float"
               >
-                {/* Enhanced glitch elements */}
-                <motion.g variants={glitchVariants} animate="glitch">
-                  <text x="60" y="110" fontSize="32" fontWeight="bold" fill="currentColor" className="opacity-70 font-mono">
+                {/* Robot gradient definitions */}
+                <defs>
+                  <linearGradient id="robotGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="rgb(34, 197, 94)" stopOpacity="0.2"/>
+                    <stop offset="100%" stopColor="rgb(16, 185, 129)" stopOpacity="0.1"/>
+                  </linearGradient>
+                  <linearGradient id="robotStroke" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="rgb(34, 197, 94)" stopOpacity="0.8"/>
+                    <stop offset="100%" stopColor="rgb(16, 185, 129)" stopOpacity="0.6"/>
+                  </linearGradient>
+                </defs>
+
+                {/* Glitch elements with green theme */}
+                <motion.g 
+                  animate={{
+                    x: [0, 2, -2, 1, -1, 0],
+                    opacity: [1, 0.8, 0.9, 0.7, 0.95, 1],
+                  }}
+                  transition={{
+                    duration: 0.5,
+                    repeat: Infinity,
+                    repeatType: "reverse",
+                    repeatDelay: 3
+                  }}
+                >
+                  <text x="60" y="110" fontSize="28" fontWeight="bold" fill="rgb(34, 197, 94)" className="opacity-70 font-mono">
                     4
                   </text>
-                  <text x="110" y="100" fontSize="28" fontWeight="bold" fill="currentColor" className="opacity-50 font-mono">
+                  <text x="110" y="100" fontSize="24" fontWeight="bold" fill="rgb(16, 185, 129)" className="opacity-50 font-mono">
                     ?
                   </text>
-                  <text x="210" y="250" fontSize="32" fontWeight="bold" fill="currentColor" className="opacity-70 font-mono">
+                  <text x="210" y="250" fontSize="28" fontWeight="bold" fill="rgb(34, 197, 94)" className="opacity-70 font-mono">
                     0
                   </text>
-                  <text x="260" y="240" fontSize="28" fontWeight="bold" fill="currentColor" className="opacity-50 font-mono">
+                  <text x="260" y="240" fontSize="24" fontWeight="bold" fill="rgb(16, 185, 129)" className="opacity-50 font-mono">
                     !
                   </text>
                 </motion.g>
 
-                {/* Robot head with gradient */}
-                <defs>
-                  <linearGradient id="robotGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="currentColor" stopOpacity="0.3"/>
-                    <stop offset="100%" stopColor="currentColor" stopOpacity="0.1"/>
-                  </linearGradient>
-                </defs>
-
+                {/* Robot head */}
                 <motion.rect
                   x="110"
                   y="80"
                   width="100"
                   height="80"
                   rx="20"
-                  stroke="currentColor"
+                  stroke="url(#robotStroke)"
                   strokeWidth="3"
                   fill="url(#robotGradient)"
                 />
 
-                {/* Enhanced antenna with glow effect */}
+                {/* Antenna with green glow */}
                 <motion.g
-                  variants={{
-                    wiggle: { rotate: [0, -8, 8, -8, 0], transition: { duration: 4, repeat: Infinity } }
+                  animate={{
+                    rotate: [0, -8, 8, -8, 0]
                   }}
-                  animate="wiggle"
-                  style={{ transformOrigin: 'center bottom' }}
+                  transition={{ 
+                    duration: 4, 
+                    repeat: Infinity,
+                    ease: "easeInOut" 
+                  }}
+                  style={{ transformOrigin: '160px 80px' }}
                 >
-                  <line x1="160" y1="80" x2="160" y2="60" stroke="currentColor" strokeWidth="3" />
+                  <line x1="160" y1="80" x2="160" y2="60" stroke="rgb(34, 197, 94)" strokeWidth="3" />
                   <motion.circle
                     cx="160"
                     cy="55"
                     r="5"
-                    fill="currentColor"
+                    fill="rgb(34, 197, 94)"
                     animate={{ 
                       scale: [1, 1.4, 1], 
                       opacity: [0.6, 1, 0.6],
-                      filter: ["brightness(1)", "brightness(1.5)", "brightness(1)"]
                     }}
                     transition={{ duration: 2, repeat: Infinity }}
                   />
                 </motion.g>
 
-                {/* Enhanced eyes with better animation */}
+                {/* Eyes with blink animation */}
                 <motion.g
-                  stroke="currentColor"
+                  stroke="rgb(34, 197, 94)"
                   strokeWidth="3"
                   strokeLinecap="round"
-                  variants={{
-                    blink: { opacity: [1, 1, 0, 1], transition: { duration: 4, repeat: Infinity, times: [0, 0.95, 0.98, 1] } }
+                  animate={{
+                    opacity: [1, 1, 0.2, 1]
                   }}
-                  animate="blink"
+                  transition={{ 
+                    duration: 4, 
+                    repeat: Infinity, 
+                    times: [0, 0.95, 0.98, 1] 
+                  }}
                 >
                   <line x1="135" y1="105" x2="145" y2="115" />
                   <line x1="145" y1="105" x2="135" y2="115" />
@@ -314,10 +427,10 @@ const NotFoundPage = () => {
                   <line x1="185" y1="105" x2="175" y2="115" />
                 </motion.g>
 
-                {/* Enhanced mouth */}
+                {/* Animated mouth */}
                 <motion.path
                   d="M145 135 Q160 148 175 135"
-                  stroke="currentColor"
+                  stroke="rgb(34, 197, 94)"
                   strokeWidth="3"
                   fill="none"
                   strokeLinecap="round"
@@ -331,39 +444,38 @@ const NotFoundPage = () => {
                   transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
                 />
 
-                {/* Enhanced body with gradient */}
+                {/* Robot body */}
                 <motion.rect
                   x="125"
                   y="160"
                   width="70"
                   height="100"
                   rx="15"
-                  stroke="currentColor"
+                  stroke="url(#robotStroke)"
                   strokeWidth="3"
                   fill="url(#robotGradient)"
                 />
                 
-                {/* Enhanced chest panel */}
+                {/* Chest panel with green glow */}
                 <motion.rect
                   x="140"
                   y="180"
                   width="40"
                   height="20"
                   rx="5"
-                  stroke="currentColor"
+                  stroke="rgb(34, 197, 94)"
                   strokeWidth="2"
-                  fill="currentColor"
-                  fillOpacity="0.1"
+                  fill="rgb(34, 197, 94)"
+                  fillOpacity="0.2"
                   animate={{ 
-                    y: [180, 178, 180],
                     opacity: [0.8, 1, 0.8]
                   }}
                   transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
                 />
 
-                {/* Enhanced arms with better animation */}
+                {/* Arms with subtle animation */}
                 <motion.g 
-                  stroke="currentColor" 
+                  stroke="rgb(34, 197, 94)" 
                   strokeWidth="3" 
                   strokeLinecap="round"
                   animate={{
@@ -378,9 +490,9 @@ const NotFoundPage = () => {
                   <line x1="235" y1="190" x2="235" y2="210" />
                 </motion.g>
 
-                {/* Enhanced legs */}
+                {/* Legs */}
                 <motion.g 
-                  stroke="currentColor" 
+                  stroke="rgb(34, 197, 94)" 
                   strokeWidth="3" 
                   strokeLinecap="round"
                   animate={{
@@ -395,15 +507,45 @@ const NotFoundPage = () => {
             </div>
           </motion.div>
         </div>
-      </main>
-      
-      <footer className="relative z-20 text-center text-muted-foreground text-sm p-6 border-t border-border/30 bg-background/50 backdrop-blur-sm">
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 0.7 }}
-          transition={{ delay: 1, duration: 0.5 }}
+
+        {/* Chat Bubble at bottom */}
+        <motion.div
+          className="absolute bottom-20 left-1/2 transform -translate-x-1/2"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: isLoaded ? 1 : 0, y: isLoaded ? 0 : 20 }}
+          transition={{ duration: 0.8, delay: 0.8 }}
         >
-          © 2024 Your Company. All Rights Reserved.
+          <div className="relative">
+            <motion.div
+              className="px-6 py-3 bg-card/80 border border-border/50 rounded-2xl shadow-lg backdrop-blur-sm"
+              variants={floatVariants}
+              animate="float"
+            >
+              <div className="flex items-center gap-2">
+                <MessageCircle className="w-4 h-4 text-green-500" />
+                <p className="text-sm text-muted-foreground font-medium">
+                  Let's get you back to chatting!
+                </p>
+              </div>
+            </motion.div>
+            
+            {/* Chat bubble tail */}
+            <div className="absolute top-full left-1/2 transform -translate-x-1/2">
+              <div className="w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-card/80"></div>
+            </div>
+          </div>
+        </motion.div>
+      </main>
+
+      {/* Footer */}
+      <footer className="relative z-10 text-center p-6 border-t border-border/30 bg-background/80 backdrop-blur-sm">
+        <motion.p
+          className="text-sm text-muted-foreground"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 0.6 }}
+          transition={{ delay: 1.2, duration: 0.5 }}
+        >
+          © 2024 Hiky Chat. Made with ❤️ for seamless conversations.
         </motion.p>
       </footer>
     </div>

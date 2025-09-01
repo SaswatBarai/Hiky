@@ -3,12 +3,12 @@ import React from 'react';
 export function HikyLogo({ width = 200, height = 200, className = "" }) {
   return (
 
-        <svg 
-      width={width} 
-      height={height} 
-      viewBox="0 0 100 100" 
-      xmlns="http://www.w3.org/2000/svg" 
-      role="img" 
+        <svg
+      width={width}
+      height={height}
+      viewBox="0 0 100 100"
+      xmlns="http://www.w3.org/2000/svg"
+      role="img"
       aria-labelledby="logoTitle"
       className={className}
     >
@@ -17,8 +17,8 @@ export function HikyLogo({ width = 200, height = 200, className = "" }) {
       <defs>
         {/* Gradient for background */}
         <radialGradient id="logoGradient" cx="50%" cy="50%" r="50%" fx="30%" fy="30%">
-          <stop offset="0%" stopColor="#3B82F6" />
-          <stop offset="100%" stopColor="#1D4ED8" />
+          <stop offset="0%" stopColor="#22C55E" />
+          <stop offset="100%" stopColor="#15803D" />
         </radialGradient>
 
         {/* Drop shadow filter */}
@@ -28,15 +28,15 @@ export function HikyLogo({ width = 200, height = 200, className = "" }) {
       </defs>
 
       {/* Rounded square background with gradient and shadow */}
-      <rect 
-        x="7" 
-        y="7" 
-        width="86" 
-        height="86" 
-        rx="20" 
+      <rect
+        x="7"
+        y="7"
+        width="86"
+        height="86"
+        rx="20"
         ry="20"
-        fill="url(#logoGradient)" 
-        filter="url(#shadow)" 
+        fill="url(#logoGradient)"
+        filter="url(#shadow)"
       />
 
       {/* Chat tail */}
@@ -46,17 +46,17 @@ export function HikyLogo({ width = 200, height = 200, className = "" }) {
       <g transform="translate(0, 2)">
         {/* Chat icon above text */}
         <path
-          d="M32 28 H68 A5 5 0 0 1 73 33 V45 A5 5 0 0 1 68 50 H32 A5 5 0 0 1 27 45 V33 A5 5 0 0 1 32 28 Z 
+          d="M32 28 H68 A5 5 0 0 1 73 33 V45 A5 5 0 0 1 68 50 H32 A5 5 0 0 1 27 45 V33 A5 5 0 0 1 32 28 Z
              M36 36 H64 M36 42 H64"
-          stroke="white" 
-          strokeWidth="1.8" 
-          fill="none" 
+          stroke="white"
+          strokeWidth="1.8"
+          fill="none"
           strokeLinecap="round"
         />
 
         {/* App name */}
         <text
-          x="50" 
+          x="50"
           y="72"
           fontFamily="Segoe UI, Arial, sans-serif"
           fontSize="22"
