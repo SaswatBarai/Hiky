@@ -11,7 +11,8 @@ import {
   createRoom,
   searchUsers,
   deleteRoom,
-  markMessagesAsRead
+  markMessagesAsRead,
+  createPrivateRoom
 } from "../utils/axios.js";
 
 export const useRegister = () => {
@@ -154,6 +155,18 @@ export const useMarkMessagesAsRead = () => {
             room._id === roomId  ? {...room, unreadCount: 0} : room
           })
         }
+      })
+    }
+  })
+}
+
+export const useCreatePrivateRoom = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: createPrivateRoom,
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({
+        queryKey:["getRooms"]
       })
     }
   })
