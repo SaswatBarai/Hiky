@@ -247,6 +247,12 @@ export const getUserRooms = async (req, res) => {
         // For now, we'll use a simple approach - you can enhance this with a lastSeen field
         const unreadCount = 0; // Implement based on your lastSeen logic
 
+        unreadCount = await Message.countDocuments({
+          roomId: room._id,
+          senderId: { $ne: userId },
+          "readBy.userId": { $ne: userId}
+        })
+
         return {
           ...room,
           lastMessage: lastMessage || null,
