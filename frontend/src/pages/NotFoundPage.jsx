@@ -4,16 +4,38 @@ import { useNavigate } from "react-router-dom";
 import { Button } from '@/components/ui/button';
 import { HikyLogo } from '@/components/hiky-logo';
 import { useTheme } from '@/components/theme-provider';
-import { Home, MessageCircle, ArrowLeft, Search } from 'lucide-react';
+import { Home, MessageCircle, ArrowLeft, Search, Quote, RefreshCw } from 'lucide-react';
+import randomQuotes from 'random-quotes';
 
 const NotFoundPage = () => {
   const [isLoaded, setIsLoaded] = useState(false);
+  const [quote, setQuote] = useState({ body: '', author: '' });
+  const [isLoadingQuote, setIsLoadingQuote] = useState(false);
   const navigate = useNavigate();
   const { theme } = useTheme();
   const isDark = theme === 'dark';
 
+  // Function to fetch a random quote
+  const fetchRandomQuote = async () => {
+    setIsLoadingQuote(true);
+    try {
+      const randomQuote = randomQuotes();
+      console.log("Random quote:", randomQuote);
+      setQuote(randomQuote);
+    } catch (error) {
+      console.error('Error fetching quote:', error);
+      setQuote({ 
+        body: 'Every great journey begins with a single step.', 
+        author: 'Anonymous' 
+      });
+    } finally {
+      setIsLoadingQuote(false);
+    }
+  };
+
   useEffect(() => {
     const timer = setTimeout(() => setIsLoaded(true), 100);
+    fetchRandomQuote(); // Fetch initial quote
     return () => clearTimeout(timer);
   }, []);
 
@@ -264,7 +286,7 @@ const NotFoundPage = () => {
             >
               <GlitchText 
                 text="404" 
-                className="text-7xl md:text-8xl font-black bg-gradient-to-r from-green-600 via-emerald-500 to-green-700 bg-clip-text text-transparent drop-shadow-lg" 
+                className="text-5xl md:text-6xl font-black bg-gradient-to-r from-green-600 via-emerald-500 to-green-700 bg-clip-text text-transparent drop-shadow-lg" 
               />
             </motion.div>
 
@@ -287,6 +309,86 @@ const NotFoundPage = () => {
               >
                 The page you're looking for seems to have wandered off into the digital void.
               </motion.p>
+            </motion.div>
+
+            {/* Inspirational Quote Section */}
+            <motion.div
+              className="mb-8"
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+            >
+              <motion.div 
+                variants={itemVariants}
+                className="relative p-6 bg-gradient-to-r from-green-50/50 via-emerald-50/30 to-green-50/50 dark:from-green-950/20 dark:via-emerald-900/10 dark:to-green-950/20 rounded-xl border border-green-200/30 dark:border-green-800/30 backdrop-blur-sm"
+              >
+                <div className="flex items-start gap-3">
+                  <motion.div
+                    animate={{ rotate: [0, 360] }}
+                    transition={{ 
+                      duration: 20, 
+                      repeat: Infinity, 
+                      ease: "linear" 
+                    }}
+                  >
+                    <Quote className="w-6 h-6 text-green-500 flex-shrink-0 mt-1" />
+                  </motion.div>
+                  <div className="flex-1">
+                    <motion.p 
+                      className="text-base md:text-lg text-foreground/90 italic leading-relaxed font-medium"
+                      key={quote.body} // This will trigger re-animation when quote changes
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.5 }}
+                    >
+                      "{quote.body || 'Loading inspiration...'}"
+                    </motion.p>
+                    {quote.author && (
+                      <motion.p 
+                        className="text-sm text-green-600 dark:text-green-400 font-medium mt-2"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.2 }}
+                      >
+                        — {quote.author}
+                      </motion.p>
+                    )}
+                    <motion.div 
+                      className="flex items-center justify-between mt-4"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.3 }}
+                    >
+                      <span className="text-sm text-green-600 dark:text-green-400 font-medium">
+                        ✨ Daily Inspiration
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={fetchRandomQuote}
+                        disabled={isLoadingQuote}
+                        className="h-8 px-3 text-green-600 hover:text-green-700 hover:bg-green-100 dark:text-green-400 dark:hover:text-green-300 dark:hover:bg-green-900/20 transition-all duration-200"
+                      >
+                        <motion.div
+                          animate={isLoadingQuote ? { rotate: 360 } : {}}
+                          transition={{ 
+                            duration: 1, 
+                            repeat: isLoadingQuote ? Infinity : 0,
+                            ease: "linear" 
+                          }}
+                        >
+                          <RefreshCw className="w-4 h-4" />
+                        </motion.div>
+                        <span className="ml-2 text-xs">New Quote</span>
+                      </Button>
+                    </motion.div>
+                  </div>
+                </div>
+                
+                {/* Decorative elements */}
+                <div className="absolute top-2 right-2 w-16 h-16 bg-gradient-to-br from-green-400/10 to-emerald-400/10 rounded-full blur-xl" />
+                <div className="absolute bottom-2 left-2 w-12 h-12 bg-gradient-to-tr from-green-300/10 to-emerald-300/10 rounded-full blur-lg" />
+              </motion.div>
             </motion.div>
 
             {/* Action Buttons */}
@@ -508,33 +610,6 @@ const NotFoundPage = () => {
           </motion.div>
         </div>
 
-        {/* Chat Bubble at bottom */}
-        <motion.div
-          className="absolute bottom-20 left-1/2 transform -translate-x-1/2"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: isLoaded ? 1 : 0, y: isLoaded ? 0 : 20 }}
-          transition={{ duration: 0.8, delay: 0.8 }}
-        >
-          <div className="relative">
-            <motion.div
-              className="px-6 py-3 bg-card/80 border border-border/50 rounded-2xl shadow-lg backdrop-blur-sm"
-              variants={floatVariants}
-              animate="float"
-            >
-              <div className="flex items-center gap-2">
-                <MessageCircle className="w-4 h-4 text-green-500" />
-                <p className="text-sm text-muted-foreground font-medium">
-                  Let's get you back to chatting!
-                </p>
-              </div>
-            </motion.div>
-            
-            {/* Chat bubble tail */}
-            <div className="absolute top-full left-1/2 transform -translate-x-1/2">
-              <div className="w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-card/80"></div>
-            </div>
-          </div>
-        </motion.div>
       </main>
 
       {/* Footer */}
