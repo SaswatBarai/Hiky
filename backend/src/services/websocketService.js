@@ -2,15 +2,19 @@ import { WebSocketServer } from "ws";
 import User from "../models/user.model.js";
 import Room from "../models/room.model.js";
 import Message from "../models/message.model.js";
+import {
+    redisClientService,
+    redisOnlineUsersService,
+    redisUserRoomsService,
+    redisRoomParticipantsService,
+    redisJoinedRoomParticipantsService,
+    redisTypingUsersService,
+    redisOfflineMessageQueueService
+} from "./redisWebSocketService.js";
 
-// Store client connections and user data
+// 🚨 IN-MEMORY STORAGE (NON-REDIS) - Keep for WebSocket instances only
+// This Map stores actual WebSocket connection objects which cannot be serialized to Redis
 const clients = new Map(); // userId -> websocket connection
-const userRooms = new Map(); // userId -> Set of roomIds
-const roomParticipants = new Map(); // roomId -> Set of userIds
-const joinedRoomParticipants = new Map(); // roomId -> Set of userIds who have joined
-const typingUsers = new Map(); // userId -> roomId
-const onlineUsers = new Set(); // Set of online userIds
-const offlineMessageQueue = new Map(); // userId -> Array of pending messages
 
 const initializeWebSocket = (server) => {
     const wss = new WebSocketServer({
@@ -40,22 +44,27 @@ const initializeWebSocket = (server) => {
                     }
 
                     case "register": {
-                        // Register user connection
+                        // 🚨 IN-MEMORY: Store WebSocket instance (cannot be serialized to Redis)
                         clients.set(userId, ws);
-                        onlineUsers.add(userId);
                         
-                        // Load user's rooms
+                        // ✅ REDIS: Add user to online users set
+                        await redisOnlineUsersService.addOnlineUser(userId);
+                        
+                        // ✅ REDIS: Store client connection metadata (not the actual WebSocket)
+                        await redisClientService.setClient(userId, {
+                            connectedAt: new Date().toISOString(),
+                            lastSeen: new Date().toISOString()
+                        });
+                        
+                        // Load user's rooms from MongoDB (persistent storage)
                         const userRoomsData = await Room.find({ participants: userId });
                         const roomIds = userRoomsData.map(room => room._id.toString());
-                        userRooms.set(userId, new Set(roomIds));
                         
-                        // Add user to room participants
-                        roomIds.forEach(roomId => {
-                            if (!roomParticipants.has(roomId)) {
-                                roomParticipants.set(roomId, new Set());
-                            }
-                            roomParticipants.get(roomId).add(userId);
-                        });
+                        // ✅ REDIS: Store user rooms and room participants
+                        for (const roomId of roomIds) {
+                            await redisUserRoomsService.addUserRoom(userId, roomId);
+                            await redisRoomParticipantsService.addRoomParticipant(roomId, userId);
+                        }
 
                         ws.send(JSON.stringify({
                             type: "registered",
@@ -78,44 +87,28 @@ const initializeWebSocket = (server) => {
                     }
 
                     case "joinRoom": {
-                        // Join a specific room
-                        if (!roomParticipants.has(roomId)) {
-                            roomParticipants.set(roomId, new Set());
-                        }
-                        roomParticipants.get(roomId).add(userId);
-                        
-                        if (!userRooms.has(userId)) {
-                            userRooms.set(userId, new Set());
-                        }
-                        userRooms.get(userId).add(roomId);
-
-                        if(!joinedRoomParticipants.has(roomId)){
-                            joinedRoomParticipants.set(roomId, new Set());
-                        }
-                        joinedRoomParticipants.get(roomId).add(userId);
-
+                        // ✅ REDIS: Join a specific room
+                        await redisRoomParticipantsService.addRoomParticipant(roomId, userId);
+                        await redisUserRoomsService.addUserRoom(userId, roomId);
+                        await redisJoinedRoomParticipantsService.addJoinedRoomParticipant(roomId, userId);
 
                         ws.send(JSON.stringify({
                             type: "joinedRoom",
                             roomId: roomId,
-                            participants: Array.from(roomParticipants.get(roomId))
+                            participants: await redisRoomParticipantsService.getRoomParticipants(roomId)
                         }));
 
                         break;
                     }
 
                     case "leaveRoom": {
-                        // Leave a specific room
-                        if (roomParticipants.has(roomId)) {
-                            roomParticipants.get(roomId).delete(userId);
-                            if (roomParticipants.get(roomId).size === 0) {
-                                roomParticipants.delete(roomId);
-                            }
-                        }
+                        // ✅ REDIS: Leave a specific room
+                        await redisRoomParticipantsService.removeRoomParticipant(roomId, userId);
+                        await redisUserRoomsService.removeUserRoom(userId, roomId);
+                        await redisJoinedRoomParticipantsService.removeJoinedRoomParticipant(roomId, userId);
                         
-                        if (userRooms.has(userId)) {
-                            userRooms.get(userId).delete(roomId);
-                        }
+                        // Remove room if no participants
+                        await redisRoomParticipantsService.removeRoomIfEmpty(roomId);
 
                         ws.send(JSON.stringify({
                             type: "leftRoom",
@@ -126,7 +119,7 @@ const initializeWebSocket = (server) => {
                     }
 
                     case "message": {
-                        // Validate room and user participation
+                        // Validate room and user participation (MongoDB check)
                         const room = await Room.findById(roomId);
                         if (!room) {
                             ws.send(JSON.stringify({
@@ -144,7 +137,7 @@ const initializeWebSocket = (server) => {
                             return;
                         }
 
-                        // Save message to database
+                        // Save message to MongoDB (persistent storage)
                         const newMessage = new Message({
                             roomId,
                             senderId: userId,
@@ -152,10 +145,10 @@ const initializeWebSocket = (server) => {
                         });
                         await newMessage.save();
 
-                        // Update room's updatedAt timestamp
+                        // Update room's updatedAt timestamp in MongoDB
                         await Room.findByIdAndUpdate(roomId, { updatedAt: new Date() });
 
-                        // Get populated message
+                        // Get populated message from MongoDB
                         const populatedMessage = await Message.findById(newMessage._id)
                             .populate("senderId", "username name email profileImage");
 
@@ -187,9 +180,11 @@ const initializeWebSocket = (server) => {
                         const isTyping = !!content;
                         
                         if (isTyping) {
-                            typingUsers.set(userId, roomId);
+                            // ✅ REDIS: Set typing status with TTL
+                            await redisTypingUsersService.setTypingUser(userId, roomId);
                         } else {
-                            typingUsers.delete(userId);
+                            // ✅ REDIS: Remove typing status
+                            await redisTypingUsersService.removeTypingUser(userId);
                         }
 
                         // Broadcast typing status to room participants
@@ -203,15 +198,20 @@ const initializeWebSocket = (server) => {
                     }
 
                     case "getOnlineStatus": {
-                        // Send online status of user's friends
+                        // Get user's friends from MongoDB
                         const user = await User.findById(userId).populate('friend', 'username name profileImage');
                         if (user && user.friend) {
-                            const friendsStatus = user.friend.map(friend => ({
-                                id: friend._id.toString(),
-                                username: friend.username,
-                                name: friend.name,
-                                profileImage: friend.profileImage,
-                                isOnline: onlineUsers.has(friend._id.toString())
+                            // ✅ REDIS: Check online status for each friend
+                            const friendsStatus = await Promise.all(user.friend.map(async (friend) => {
+                                const friendId = friend._id.toString();
+                                const isOnline = await redisOnlineUsersService.isUserOnline(friendId);
+                                return {
+                                    id: friendId,
+                                    username: friend.username,
+                                    name: friend.name,
+                                    profileImage: friend.profileImage,
+                                    isOnline: isOnline
+                                };
                             }));
 
                             ws.send(JSON.stringify({
@@ -262,31 +262,18 @@ const initializeWebSocket = (server) => {
         ws.on("close", () => {
             console.log("WebSocket connection closed");
             if (currentUserId) {
-                // Clean up user data
+                // 🚨 IN-MEMORY: Remove WebSocket instance
                 clients.delete(currentUserId);
-                onlineUsers.delete(currentUserId);
-                typingUsers.delete(currentUserId);
                 
-                // Remove user from all rooms
-                if (userRooms.has(currentUserId)) {
-                    const rooms = userRooms.get(currentUserId);
-                    rooms.forEach(roomId => {
-                        if (roomParticipants.has(roomId)) {
-                            roomParticipants.get(roomId).delete(currentUserId);
-                            if (roomParticipants.get(roomId).size === 0) {
-                                roomParticipants.delete(roomId);
-                            }
-                        }
-                        
-                        // Notify others in room that user is offline
-                        broadcastToRoom(roomId, {
-                            type: "userOffline",
-                            userId: currentUserId
-                        });
-                    });
-                    userRooms.delete(currentUserId);
-                }
-
+                // ✅ REDIS: Remove user from online users
+                redisOnlineUsersService.removeOnlineUser(currentUserId);
+                
+                // ✅ REDIS: Remove typing status
+                redisTypingUsersService.removeTypingUser(currentUserId);
+                
+                // ✅ REDIS: Clean up user rooms and participants
+                cleanupUserRooms(currentUserId);
+                
                 // Broadcast offline status to friends
                 broadcastOfflineStatus(currentUserId, wss);
             }
@@ -300,32 +287,64 @@ const initializeWebSocket = (server) => {
     return wss;
 };
 
+// Helper function to clean up user rooms (uses Redis)
+async function cleanupUserRooms(userId) {
+    try {
+        // ✅ REDIS: Get user's rooms
+        const userRooms = await redisUserRoomsService.getUserRooms(userId);
+        
+        for (const roomId of userRooms) {
+            // ✅ REDIS: Remove user from room participants
+            await redisRoomParticipantsService.removeRoomParticipant(roomId, userId);
+            await redisJoinedRoomParticipantsService.removeJoinedRoomParticipant(roomId, userId);
+            
+            // ✅ REDIS: Remove room if no participants
+            await redisRoomParticipantsService.removeRoomIfEmpty(roomId);
+            
+            // Notify others in room that user is offline
+            broadcastToRoom(roomId, {
+                type: "userOffline",
+                userId: userId
+            });
+        }
+        
+        // ✅ REDIS: Remove all user rooms
+        await redisUserRoomsService.removeAllUserRooms(userId);
+    } catch (error) {
+        console.error("Error cleaning up user rooms:", error);
+    }
+}
+
 // Helper function to broadcast message to all participants in a room
 function broadcastToRoom(roomId, message, excludeUserId = null) {
-    if (roomParticipants.has(roomId)) {
-        const participants = roomParticipants.get(roomId);
+    // ✅ REDIS: Get room participants from Redis
+    redisRoomParticipantsService.getRoomParticipants(roomId).then(participants => {
         participants.forEach(participantId => {
             if (excludeUserId && participantId === excludeUserId) {
                 return;
             }
             
+            // 🚨 IN-MEMORY: Get WebSocket instance from memory (cannot be in Redis)
             const client = clients.get(participantId);
             if (client && client.readyState === 1) { // 1 = WebSocket.OPEN
                 try {
                     client.send(JSON.stringify(message));
                 } catch (error) {
                     console.error("Error sending message to client:", error);
-                    // Remove dead connection
+                    // 🚨 IN-MEMORY: Remove dead connection from memory
                     clients.delete(participantId);
                 }
             }
         });
-    }
+    }).catch(error => {
+        console.error("Error getting room participants for broadcast:", error);
+    });
 }
 
 // Enhanced function to broadcast messages and handle offline users
 async function broadcastMessageToRoom(roomId, messageData, excludeUserId = null) {
     try {
+        // Get room participants from MongoDB (persistent storage)
         const room = await Room.findById(roomId).populate('participants', '_id');
         if (!room) return;
 
@@ -336,28 +355,22 @@ async function broadcastMessageToRoom(roomId, messageData, excludeUserId = null)
                 return;
             }
 
+            // 🚨 IN-MEMORY: Get WebSocket instance from memory
             const client = clients.get(participantId);
             
             if (client && client.readyState === 1) {
-                // User is online, send message immediately
+                // User is online, send message immediately via WebSocket
                 try {
                     client.send(JSON.stringify(messageData));
                 } catch (error) {
                     console.error("Error sending message to client:", error);
+                    // 🚨 IN-MEMORY: Remove dead connection from memory
                     clients.delete(participantId);
                 }
             } else {
                 // User is offline, queue message for delivery when they come online
-                if (!offlineMessageQueue.has(participantId)) {
-                    offlineMessageQueue.set(participantId, []);
-                }
-                offlineMessageQueue.get(participantId).push(messageData);
-                
-                // Optional: Limit offline message queue size
-                const queue = offlineMessageQueue.get(participantId);
-                if (queue.length > 100) {
-                    queue.shift(); // Remove oldest message
-                }
+                // ✅ REDIS: Add to offline message queue
+                redisOfflineMessageQueueService.addOfflineMessage(participantId, messageData);
             }
         });
     } catch (error) {
@@ -367,8 +380,11 @@ async function broadcastMessageToRoom(roomId, messageData, excludeUserId = null)
 
 // Deliver offline messages when user comes online
 async function deliverOfflineMessages(userId) {
-    if (offlineMessageQueue.has(userId)) {
-        const messages = offlineMessageQueue.get(userId);
+    try {
+        // ✅ REDIS: Get offline messages from Redis
+        const messages = await redisOfflineMessageQueueService.getOfflineMessages(userId);
+        
+        // 🚨 IN-MEMORY: Get WebSocket instance from memory
         const client = clients.get(userId);
         
         if (client && client.readyState === 1 && messages.length > 0) {
@@ -379,22 +395,28 @@ async function deliverOfflineMessages(userId) {
                 messages: messages
             }));
             
-            // Clear the queue
-            offlineMessageQueue.delete(userId);
+            // ✅ REDIS: Clear the queue
+            await redisOfflineMessageQueueService.clearOfflineMessages(userId);
         }
+    } catch (error) {
+        console.error("Error delivering offline messages:", error);
     }
 }
 
 // Send current online status of all friends to a newly connected user
 async function sendCurrentOnlineStatus(userId, ws) {
     try {
+        // Get user's friends from MongoDB
         const user = await User.findById(userId).populate('friend', 'username name profileImage');
         if (!user || !user.friend) return;
 
-        // Check which friends are currently online and send their status
-        user.friend.forEach(friend => {
+        // Check which friends are currently online using Redis
+        for (const friend of user.friend) {
             const friendId = friend._id.toString();
-            if (onlineUsers.has(friendId)) {
+            // ✅ REDIS: Check online status
+            const isOnline = await redisOnlineUsersService.isUserOnline(friendId);
+            
+            if (isOnline) {
                 ws.send(JSON.stringify({
                     type: "friendOnline",
                     userId: friendId,
@@ -406,7 +428,7 @@ async function sendCurrentOnlineStatus(userId, ws) {
                     }
                 }));
             }
-        });
+        }
     } catch (error) {
         console.error("Error sending current online status:", error);
     }
@@ -415,11 +437,13 @@ async function sendCurrentOnlineStatus(userId, ws) {
 // Broadcast online status to friends
 async function broadcastOnlineStatus(userId, wss) {
     try {
+        // Get user's friends from MongoDB
         const user = await User.findById(userId).populate('friend', 'username name profileImage');
         if (!user || !user.friend) return;
 
         // Notify each friend that this user is online
-        user.friend.forEach(friend => {
+        for (const friend of user.friend) {
+            // 🚨 IN-MEMORY: Get friend's WebSocket instance from memory
             const friendClient = clients.get(friend._id.toString());
             if (friendClient && friendClient.readyState === 1) {
                 friendClient.send(JSON.stringify({
@@ -433,7 +457,7 @@ async function broadcastOnlineStatus(userId, wss) {
                     }
                 }));
             }
-        });
+        }
     } catch (error) {
         console.error("Error broadcasting online status:", error);
     }
@@ -442,11 +466,13 @@ async function broadcastOnlineStatus(userId, wss) {
 // Broadcast offline status to friends
 async function broadcastOfflineStatus(userId, wss) {
     try {
+        // Get user's friends from MongoDB
         const user = await User.findById(userId).populate('friend', 'username name profileImage');
         if (!user || !user.friend) return;
 
         // Notify each friend that this user is offline
-        user.friend.forEach(friend => {
+        for (const friend of user.friend) {
+            // 🚨 IN-MEMORY: Get friend's WebSocket instance from memory
             const friendClient = clients.get(friend._id.toString());
             if (friendClient && friendClient.readyState === 1) {
                 friendClient.send(JSON.stringify({
@@ -454,25 +480,25 @@ async function broadcastOfflineStatus(userId, wss) {
                     userId: userId
                 }));
             }
-        });
+        }
     } catch (error) {
         console.error("Error broadcasting offline status:", error);
     }
 }
 
-// Get online users count
-function getOnlineUsersCount() {
-    return onlineUsers.size;
+// Get online users count (uses Redis)
+async function getOnlineUsersCount() {
+    return await redisOnlineUsersService.getOnlineUsersCount();
 }
 
-// Get room participants count
-function getRoomParticipantsCount(roomId) {
-    return roomParticipants.has(roomId) ? roomParticipants.get(roomId).size : 0;
+// Get room participants count (uses Redis)
+async function getRoomParticipantsCount(roomId) {
+    return await redisRoomParticipantsService.getRoomParticipantsCount(roomId);
 }
 
-// Get offline message queue size for a user
-function getOfflineMessageCount(userId) {
-    return offlineMessageQueue.has(userId) ? offlineMessageQueue.get(userId).length : 0;
+// Get offline message queue size for a user (uses Redis)
+async function getOfflineMessageCount(userId) {
+    return await redisOfflineMessageQueueService.getOfflineMessageCount(userId);
 }
 
 export { 
