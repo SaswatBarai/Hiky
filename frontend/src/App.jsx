@@ -10,6 +10,7 @@ import { ProfileUploader } from "./pages/NewProfile";
 import { useStoreuser } from "../src/hooks/usegetData";
 import ChatLayout  from "./Layout/chatLayout";
 import ChatHome from "./pages/ChatHome";
+import Landing from "./pages/Landing";
 
 function App() {
   const { user, isLoading } = useStoreuser();
@@ -21,6 +22,7 @@ function App() {
           <Route element={<Register />} path="/register" />
           <Route element={<ProfileUploader />} path="/profile-uploader" />
           <Route element={<NotFoundPage />} path="/*" />
+          <Route element={<Landing/>} path="/landing"/>
         </Route>
         <Route element={<ChatLayout />} path="/">
           <Route element={<ChatHome />} path="/" index />
