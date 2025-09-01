@@ -34,19 +34,18 @@ function ChatHome() {
   const [typingTimeout, setTypingTimeout] = useState(null);
   const [onlineUsers, setOnlineUsers] = useState(new Set()); // Track online users
   const [typingUsers, setTypingUsers] = useState(new Map()); // Track typing users per room
+  const [shouldAutoScroll, setShouldAutoScroll] = useState(true); // Control auto-scroll behavior
+  const [isLoadingOlderMessages, setIsLoadingOlderMessages] = useState(false); // Track if loading older messages
   const isMobile = useIsMobile();
   const { notify } = useNotification();
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
   const prevSelectedChatRef = useRef(null);
   const queryClient = useQueryClient();
+  const scrollPositionRef = useRef(0); // Track scroll position for pagination
+  const scrollLockRef = useRef(false); // Prevent scroll changes during pagination
+  const isRestoringScrollRef = useRef(false); // Track if we're in the middle of scroll restoration
 
-  // // Debug effect to track online users
-  // useEffect(() => {
-  //   console.log("Online users updated:", Array.from(onlineUsers));
-  // }, [onlineUsers]);
-
-  // Stable WebSocket message handler with useCallback and proper dependencies
   const handleWebSocketMessage = useCallback((data) => {
     console.log("Received WebSocket message:", data);
 
@@ -105,6 +104,9 @@ function ChatHome() {
             // Add new message from others or if no optimistic message found
             return [...prev, newMsg];
           });
+          
+          // Enable auto-scroll for new real-time messages
+          setShouldAutoScroll(true);
         } else {
           notify(`New message from ${data.sender?.username || "Unknown"}`, "info");
         }
@@ -143,13 +145,13 @@ function ChatHome() {
         console.log("Successfully registered to WebSocket");
         break;
 
-      // case "initialOnlineStatus":
-      //   // Handle bulk online status update when connecting
-      //   if (data.onlineUsers && Array.isArray(data.onlineUsers)) {
-      //     setOnlineUsers(new Set(data.onlineUsers));
-      //     console.log("Received initial online status for users:", data.onlineUsers);
-      //   }
-      //   break;
+      case "initialOnlineStatus":
+        // Handle bulk online status update when connecting
+        if (data.onlineUsers && Array.isArray(data.onlineUsers)) {
+          setOnlineUsers(new Set(data.onlineUsers));
+          console.log("Received initial online status for users:", data.onlineUsers);
+        }
+        break;
 
       case "joinedRoom":
         console.log(`Joined room ${data.roomId} successfully`);
@@ -204,6 +206,13 @@ function ChatHome() {
 
     // Join new room
    joinRoom(selectedChat); 
+    
+    // Enable auto-scroll when switching to a new chat and reset all scroll states
+    setShouldAutoScroll(true);
+    setIsLoadingOlderMessages(false);
+    scrollLockRef.current = false;
+    isRestoringScrollRef.current = false;
+    
     // Mark messages as read after a short delay
     const markReadTimer = setTimeout(() => {
       // Also update local unread count
@@ -243,32 +252,122 @@ function ChatHome() {
   useEffect(() => {
     if (!messageData) return;
 
-    const allMessages = messageData.pages
-      .flatMap((page) => page.messages)
-      .map((msg) => ({
-        id: msg._id,
-        text: msg.content,
-        sender: msg.senderId._id === userId ? "me" : "other",
-        time: new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        timeStr: msg.createdAt,
-        profileImage: msg.senderId.profileImage?.image,
-        // For messages loaded from database - NO delivery status shown
-        optimistic: false,
-        pending: false,
-        delivered: false, // Don't mark as delivered to avoid showing tick
-        failed: false,
-        showDeliveryStatus: false // Critical: Never show delivery status for database messages
-      }))
-      .sort((a, b) => new Date(a.timeStr) - new Date(b.timeStr));
+    const container = messagesContainerRef.current;
+    if (!container) return;
 
-    console.log("Loading messages from API:", allMessages.length, "messages with showDeliveryStatus:", allMessages.filter(m => m.showDeliveryStatus).length);
-    setMessages(allMessages);
+    // For pagination, we need to prevent ANY scroll changes
+    const isPagination = messageData.pages.length > 1;
+    
+    if (isPagination) {
+      // Completely lock scrolling during pagination
+      scrollLockRef.current = true;
+      isRestoringScrollRef.current = true;
+      setShouldAutoScroll(false);
+      setIsLoadingOlderMessages(true);
+      
+      // Store exact scroll metrics before DOM changes
+      const scrollMetrics = {
+        scrollTop: container.scrollTop,
+        scrollHeight: container.scrollHeight,
+        clientHeight: container.clientHeight,
+        scrollBottom: container.scrollHeight - container.scrollTop - container.clientHeight
+      };
+      
+      console.log("Before loading older messages:", scrollMetrics);
+      
+      // Temporarily disable scroll events to prevent interference
+      container.style.overflowY = 'hidden';
+      
+      const allMessages = messageData.pages
+        .flatMap((page) => page.messages)
+        .map((msg) => ({
+          id: msg._id,
+          text: msg.content,
+          sender: msg.senderId._id === userId ? "me" : "other",
+          time: new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          timeStr: msg.createdAt,
+          profileImage: msg.senderId.profileImage?.image,
+          optimistic: false,
+          pending: false,
+          delivered: false,
+          failed: false,
+          showDeliveryStatus: false
+        }))
+        .sort((a, b) => new Date(a.timeStr) - new Date(b.timeStr));
+
+      setMessages(allMessages);
+      
+      // Restore scroll position after DOM updates
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          if (container && scrollLockRef.current) {
+            const newScrollHeight = container.scrollHeight;
+            const heightDifference = newScrollHeight - scrollMetrics.scrollHeight;
+            const newScrollTop = scrollMetrics.scrollTop + heightDifference;
+            
+            // Force scroll position
+            container.scrollTop = newScrollTop;
+            
+            console.log("Restored scroll:", {
+              oldScrollTop: scrollMetrics.scrollTop,
+              newScrollTop: newScrollTop,
+              heightDifference: heightDifference,
+              newScrollHeight: newScrollHeight
+            });
+            
+            // Multiple restoration attempts
+            setTimeout(() => {
+              container.scrollTop = newScrollTop;
+              setTimeout(() => {
+                container.scrollTop = newScrollTop;
+                // Re-enable scrolling
+                container.style.overflowY = 'auto';
+                // Unlock after everything is done
+                setTimeout(() => {
+                  scrollLockRef.current = false;
+                  isRestoringScrollRef.current = false;
+                  setIsLoadingOlderMessages(false);
+                }, 50);
+              }, 10);
+            }, 10);
+          }
+        });
+      });
+    } else {
+      // Initial load or new chat - normal processing
+      const allMessages = messageData.pages
+        .flatMap((page) => page.messages)
+        .map((msg) => ({
+          id: msg._id,
+          text: msg.content,
+          sender: msg.senderId._id === userId ? "me" : "other",
+          time: new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          timeStr: msg.createdAt,
+          profileImage: msg.senderId.profileImage?.image,
+          optimistic: false,
+          pending: false,
+          delivered: false,
+          failed: false,
+          showDeliveryStatus: false
+        }))
+        .sort((a, b) => new Date(a.timeStr) - new Date(b.timeStr));
+
+      console.log("Loading messages from API:", allMessages.length, "messages with showDeliveryStatus:", allMessages.filter(m => m.showDeliveryStatus).length);
+      
+      scrollLockRef.current = false;
+      isRestoringScrollRef.current = false;
+      setIsLoadingOlderMessages(false);
+      setMessages(allMessages);
+      setTimeout(() => setShouldAutoScroll(true), 100);
+    }
   }, [messageData, userId]);
 
-  // Auto-scroll to bottom
+  // Auto-scroll to bottom only when conditions are right
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    if (shouldAutoScroll && !isLoadingOlderMessages && !scrollLockRef.current && !isRestoringScrollRef.current) {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages, shouldAutoScroll, isLoadingOlderMessages]);
 
   // Infinite scroll
   useEffect(() => {
@@ -276,7 +375,19 @@ function ChatHome() {
     if (!container || !hasNextPage || isFetchingNextPage) return;
 
     const handleScroll = () => {
+      // Don't trigger if we're in the middle of restoration
+      if (scrollLockRef.current || isRestoringScrollRef.current) {
+        return;
+      }
+      
+      // Store current scroll position
+      scrollPositionRef.current = container.scrollTop;
+      
+      // Load more messages when scrolling to top
       if (container.scrollTop < 100) {
+        // Prevent auto-scroll during pagination
+        setShouldAutoScroll(false);
+        setIsLoadingOlderMessages(true);
         fetchNextPage();
       }
     };
@@ -309,6 +420,7 @@ function ChatHome() {
 
     setMessages(prev => [...prev, optimisticMessage]);
     setNewMessage("");
+    setShouldAutoScroll(true); // Enable auto-scroll for new messages being sent
     // sendTypingIndicator(selectedChat, false);
 
     // Send via WebSocket
