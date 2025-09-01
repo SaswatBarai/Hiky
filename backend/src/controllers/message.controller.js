@@ -164,6 +164,10 @@ export const createPrivateRoom = async (req, res) => {
     await User.findByIdAndUpdate(otherUser._id, {
       $addToSet: { friend: userId },
     });
+
+    //wait for 60second
+    // const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+    // await wait(10000);
     return res.status(201).json({
       success: true,
       roomId: room._id,
@@ -172,6 +176,10 @@ export const createPrivateRoom = async (req, res) => {
     });
   } catch (error) {
     console.error("Create private room error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error"
+    });
   }
 };
 

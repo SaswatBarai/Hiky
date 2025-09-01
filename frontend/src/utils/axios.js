@@ -281,7 +281,7 @@ export const createPrivateRoom = async(formData) => {
       "/messages/create-private-room",
       formData,
       {
-        heders:{
+        headers:{
           "Content-Type":"application/json"
         },
         withCredentials:true
