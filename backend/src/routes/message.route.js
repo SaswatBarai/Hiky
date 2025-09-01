@@ -6,7 +6,8 @@ import {
     getUserRooms,
     searchUsers,
     deleteRoom,
-    markMessagesAsRead
+    markMessagesAsRead,
+    createPrivateRoom
 } from "../controllers/message.controller.js";
 import { authMiddleware } from "../middleware/auth.middleware.js";
 
@@ -17,6 +18,7 @@ router.use(authMiddleware);
 
 // Room routes
 router.post("/create-room", createRoom);
+router.post("/create-private-room", createPrivateRoom);
 router.get("/rooms", getUserRooms);
 router.delete("/room/:roomId", deleteRoom);
 

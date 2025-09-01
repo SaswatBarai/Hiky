@@ -36,6 +36,7 @@ import { useWebSocket } from "../hooks/useWebSocket";
 import { useQueryClient } from "@tanstack/react-query";
 import { Badge } from "../components/ui/badge";
 import { UserPlus } from "@mynaui/icons-react";
+import {useCreatePrivateRoom} from "../utils/queries.js"
 
 function ChatHome() {
   const { setTheme, theme } = useTheme();
@@ -59,7 +60,11 @@ function ChatHome() {
   const scrollPositionRef = useRef(0); // Track scroll position for pagination
   const scrollLockRef = useRef(false); // Prevent scroll changes during pagination
   const isRestoringScrollRef = useRef(false); // Track if we're in the middle of scroll restoration
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const addFriendRef = useRef();
+  const [friendMainInput, setFriendMainInput] = useState("");
+  const createPrivateRoomMutation = useCreatePrivateRoom();
+
 
   const handleWebSocketMessage = useCallback(
     (data) => {
@@ -603,7 +608,38 @@ function ChatHome() {
   const whatsappBgPattern = `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23075E54' fill-opacity='0.05'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`;
 
   const handleAddFriend = () => {
-    addFriendRef.current.click()
+    setIsDialogOpen(true);
+  }
+
+  const handleAddFriendSubmit = () => {
+    if (!friendMainInput.trim()) {
+      notify("Please enter a valid username or email", "error");
+      return;
+    }
+    
+    // Implement the logic to add a friend using friendMainInput
+    const formData = {
+      mainInput: friendMainInput.trim(),
+      roomType: "private"
+    };
+    
+    createPrivateRoomMutation.mutate(
+      formData,
+      {
+        onSuccess:(data) => {
+          notify("Your Friend Added Successfully", "success");
+          setIsDialogOpen(false);
+          setFriendMainInput(""); // Clear the input
+        },
+        onError:(error) => {
+          notify(
+            error?.response?.data?.message ||
+              "Failed to add friend. Please try again.",
+            "error"
+          );
+        }
+      }
+    )
   }
 
 
@@ -626,29 +662,38 @@ function ChatHome() {
           <div></div>
           <div className="flex justify-center items-center gap-2">
             <div 
-            onClick={handleAddFriend}
+            onClick={() => setIsDialogOpen(true)}
             className="flex cursor-pointer z-50 group hover:scale-110 transition-transform">
               <div className="p-3 rounded-full bg-background/80 backdrop-blur-sm shadow-lg border border-border/50 hover:shadow-xl transition-all">
                 <UserPlus 
                 className="w-5 h-5 text-green-400" />
-                <AlertDialog asChild >
+                <AlertDialog open={isDialogOpen} onOpenChange={(open) => {
+                  console.log('Dialog open state changed:', open);
+                  setIsDialogOpen(open);
+                }}>
                   <AlertDialogTrigger className="hidden">
                     <Button variant="outline" ref={addFriendRef} >Show Dialog</Button>
                   </AlertDialogTrigger>
-                  <AlertDialogContent>
+                  <AlertDialogContent onClick={(e) => e.stopPropagation()}>
                     <AlertDialogHeader>
                       <AlertDialogTitle>
-                        Are you absolutely sure?
+                        Add Friend
                       </AlertDialogTitle>
-                      <AlertDialogDescription>
-                        This action cannot be undone. This will permanently
-                        delete your account and remove your data from our
-                        servers.
-                      </AlertDialogDescription>
+                      <div>
+                        <Input
+                        onChange={(e) => setFriendMainInput(e.target.value)}
+                        value={friendMainInput}
+                        placeholder="Enter your friend's username or email" />
+                      </div>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                      <AlertDialogCancel onClick={() => setIsDialogOpen(false)}>Cancel</AlertDialogCancel>
-                      <AlertDialogAction>Continue</AlertDialogAction>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction
+                      onClick={handleAddFriendSubmit}
+                      disabled={createPrivateRoomMutation.isPending}
+                      >
+                        {createPrivateRoomMutation.isPending ? "Adding..." : "Add Friend"}
+                      </AlertDialogAction>
                     </AlertDialogFooter>
                   </AlertDialogContent>
                 </AlertDialog>

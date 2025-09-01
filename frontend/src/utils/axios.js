@@ -274,3 +274,22 @@ export const markMessagesAsRead = async(roomId) => {
     throw error;
   }
 }
+
+export const createPrivateRoom = async(formData) => {
+  try {
+    const res = await axiosInstance.post(
+      "/messages/create-private-room",
+      formData,
+      {
+        heders:{
+          "Content-Type":"application/json"
+        },
+        withCredentials:true
+      }
+    );
+    return res.data;  
+    
+  } catch (error) {
+    throw error;
+  }
+}
