@@ -80,7 +80,7 @@ const Login = ({
             } else if (!data.user?.name || !data.user?.profileImage) {
               navigate("/profile-uploader"); // Complete profile
             } else {
-              navigate("/"); // Go to dashboard
+              navigate("/chat"); // Go to chat dashboard
             }
           }
         },

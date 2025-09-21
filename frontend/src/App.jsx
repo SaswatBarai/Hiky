@@ -1,6 +1,5 @@
 import React from "react";
 import { Routes, Route } from "react-router-dom";
-import { useSelector } from "react-redux";
 import { ThemeProvider } from "@/components/theme-provider";
 
 // Layouts
@@ -20,85 +19,95 @@ import NotFoundPage from "./pages/NotFoundPage";
 // Wrappers
 import { Guest, Protect } from "./warpper/Protect";
 
-// Hooks
+// Hooks & Redux
 import { useStoreuser } from "../src/hooks/usegetData";
+import { useSelector } from "react-redux";
+
+// UI Components
+import { FullScreenSpinner } from "@/components/ui/spinner";
 
 function App() {
   const { user, isLoading } = useStoreuser();
   const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
 
-  console.log("App component rendering...", { user, isLoading, isAuthenticated });
+  // Show loading screen while checking authentication
+  if (isLoading) {
+    return (
+      <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
+        <FullScreenSpinner text="Initializing Hiky..." />
+      </ThemeProvider>
+    );
+  }
 
   return (
     <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
       <Routes>
-        {/* Public Routes - Guest only (redirects if authenticated) */}
+        {/* Public Routes - Guest Layout */}
         <Route element={<Layout />} path="/">
-          {/* Landing Page */}
-          <Route 
-          path="/"
+          <Route
+            index
             element={
               <Guest>
                 <Landing />
               </Guest>
-            } 
+            }
           />
-          
-          {/* Authentication Routes - Guest only */}
-          <Route 
-            path="/login" 
+          <Route
+            path="login"
             element={
               <Guest>
                 <Login />
               </Guest>
-            } 
+            }
           />
-          
-          <Route 
-            path="/register" 
+          <Route
+            path="register"
             element={
               <Guest>
                 <Register />
               </Guest>
-            } 
+            }
           />
-          
-          {/* Profile Setup Route - Guest only */}
-          <Route 
-            path="/profile-uploader" 
+          <Route
+            path="forgot-password"
+            element={
+              <Guest>
+                <ForgotPassword />
+              </Guest>
+            }
+          />
+          <Route
+            path="reset-password"
+            element={
+              <Guest>
+                <ResetPassword />
+              </Guest>
+            }
+          />
+          <Route
+            path="profile-uploader"
             element={
               <Guest>
                 <ProfileUploader />
               </Guest>
-            } 
+            }
           />
-          
-          {/* Password Reset Routes - Available to everyone */}
-          <Route 
-            path="/forgot-password" 
-            element={<ForgotPassword />} 
-          />
-          
-          <Route 
-            path="/reset-password/:token" 
-            element={<ResetPassword />} 
-          />
-          
-          {/* 404 - Catch all other routes */}
-          <Route path="*" element={<NotFoundPage />} />
         </Route>
 
-        {/* Protected Routes - Authenticated users only */}
-        <Route element={<ChatLayout />} path="/">
-          <Route 
-          path="/"
+        {/* Protected Routes - Chat Layout */}
+        <Route element={<ChatLayout />} path="/chat">
+          <Route
+            index
             element={
               <Protect>
                 <ChatHome />
               </Protect>
-            } 
+            }
           />
         </Route>
+
+        {/* Catch-all route for 404 */}
+        <Route element={<NotFoundPage />} path="*" />
       </Routes>
     </ThemeProvider>
   );

@@ -10,7 +10,7 @@ import {
     createPrivateRoom
 } from "../controllers/message.controller.js";
 import { authMiddleware } from "../middleware/auth.middleware.js";
-import { validateSchema } from '../validation/validationMiddleware.js';
+import { validateSchema, validateCombined } from '../validation/validationMiddleware.js';
 import {
     createRoomSchema,
     createPrivateRoomSchema,
@@ -35,7 +35,16 @@ router.delete("/room/:roomId", validateSchema(deleteRoomParamsSchema, 'params'),
 
 // Message routes
 router.post("/send-message", validateSchema(sendMessageSchema), sendMessage);
-router.get("/messages/:roomId", validateSchema(getMessagesParamsSchema, 'params'), validateSchema(getMessagesQuerySchema, 'query'), getMessages);
+// Test with only params validation first
+router.get("/messages/:roomId", 
+    validateSchema(getMessagesParamsSchema, 'params'), 
+    getMessages
+);
+// Full validation (enable after params validation works)
+// router.get("/messages/:roomId", 
+//     validateCombined(getMessagesParamsSchema, getMessagesQuerySchema), 
+//     getMessages
+// );
 router.post("/mark-read/:roomId", validateSchema(markMessagesAsReadParamsSchema, 'params'), markMessagesAsRead);
 
 // User search route
