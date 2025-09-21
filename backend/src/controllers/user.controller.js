@@ -243,7 +243,7 @@ export const resentOTP = async (req,res) => {
 export const profileUploader = async (req, res) => {
     try {
         const {name,about} = req.body;
-        console.log(name, about);
+        // console.log(name, about);
         const path = req.file ? req.file.path : null;
 
         if(!name || !about){
@@ -262,7 +262,7 @@ export const profileUploader = async (req, res) => {
 
         const user = req.user; 
 
-        console.log(user)
+        // console.log(user)
         if (!user) {
             return res.status(401).json({
                 success: false,
@@ -414,7 +414,7 @@ export const login = async (req,res) => {
 
 export const logout = async (req,res) => {
 
-    console.log("mark 1")
+    // console.log("mark 1")
     try {
         if(!req.user) {
             return res.status(401).json({
@@ -495,9 +495,9 @@ export const verifyResetPasswordToken = async (req,res) => {
             });
         }
         const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
-        console.log("hashedToken",hashedToken)
+        // console.log("hashedToken",hashedToken)
         const email = await redisClient.get(`reset:${hashedToken}`);
-        console.log(email)
+        // console.log(email)
         if(!email){
             return res.status(400).json({
                 success: false,

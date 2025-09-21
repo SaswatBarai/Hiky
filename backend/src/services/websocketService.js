@@ -23,7 +23,7 @@ const initializeWebSocket = (server) => {
 
     wss.on("connection", (ws) => {
         let currentUserId = null;
-        console.log("New WebSocket connection established");
+        // console.log("New WebSocket connection established");
 
         ws.on("message", async (data) => {
             try {
@@ -211,7 +211,7 @@ const initializeWebSocket = (server) => {
                     }
 
                     case "readReceipt" :{
-                        console.log("Read receipt event occurred for room:", roomId, "user:", userId);
+                        // console.log("Read receipt event occurred for room:", roomId, "user:", userId);
                         await Message.markRoomMessagesAsReadOnOpen(userId, roomId);
                         break;
                     }
@@ -233,7 +233,7 @@ const initializeWebSocket = (server) => {
         });
 
         ws.on("close", () => {
-            console.log("WebSocket connection closed");
+            // console.log("WebSocket connection closed");
             if (currentUserId) {
                 clients.delete(currentUserId);
                 redisOnlineUsersService.removeOnlineUser(currentUserId);

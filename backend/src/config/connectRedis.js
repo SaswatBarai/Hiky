@@ -2,7 +2,7 @@ import Redis from "ioredis";
 
 import dotenv from "dotenv";
 dotenv.config();
-console.log('Redis URL:', process.env.REDIS_URL ? 'Found' : 'Not found');
+// console.log('Redis URL:', process.env.REDIS_URL ? 'Found' : 'Not found');
 
 // Create Redis client using the connection string
 export const redisClient = new Redis(process.env.REDIS_URL, {
@@ -39,7 +39,7 @@ export const sessionRedisClient = new Redis(process.env.REDIS_URL, {
 
 // Handle Redis connection events for main client
 redisClient.on('connect', () => {
-    console.log('✅ Main Redis connected successfully');
+    // console.log('✅ Main Redis connected successfully');
 });
 
 redisClient.on('error', (err) => {
@@ -47,12 +47,12 @@ redisClient.on('error', (err) => {
 });
 
 redisClient.on('close', () => {
-    console.log('⚠️ Main Redis connection closed');
+    // console.log('⚠️ Main Redis connection closed');
 });
 
 // Handle Redis connection events for WebSocket client
 wsRedisClient.on('connect', () => {
-    console.log('✅ WebSocket Redis connected successfully (DB 1)');
+    // console.log('✅ WebSocket Redis connected successfully (DB 1)');
 });
 
 wsRedisClient.on('error', (err) => {
@@ -61,7 +61,7 @@ wsRedisClient.on('error', (err) => {
 
 // Handle Redis connection events for cache client
 cacheRedisClient.on('connect', () => {
-    console.log('✅ Cache Redis connected successfully (DB 2)');
+    // console.log('✅ Cache Redis connected successfully (DB 2)');
 });
 
 cacheRedisClient.on('error', (err) => {
@@ -70,7 +70,7 @@ cacheRedisClient.on('error', (err) => {
 
 // Handle Redis connection events for session client
 sessionRedisClient.on('connect', () => {
-    console.log('✅ Session Redis connected successfully (DB 3)');
+    // console.log('✅ Session Redis connected successfully (DB 3)');
 });
 
 sessionRedisClient.on('error', (err) => {

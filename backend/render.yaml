@@ -1,0 +1,43 @@
+services:
+  - type: web
+    name: hiky-backend
+    env: node
+    plan: free
+    buildCommand: pnpm install
+    startCommand: pnpm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: MONGODB_URI
+        fromDatabase:
+          name: hiky-mongodb
+          property: connectionString
+      - key: REDIS_URL
+        fromDatabase:
+          name: hiky-redis
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      - key: EMAIL_USER
+        sync: false
+      - key: EMAIL_PASS
+        sync: false
+      - key: FRONTEND_URL
+        value: https://your-frontend-domain.onrender.com
+
+databases:
+  - name: hiky-mongodb
+    databaseName: hiky
+    user: hiky-user
+  - name: hiky-redis
+    plan: free
