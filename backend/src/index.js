@@ -14,17 +14,17 @@ const wss = initializeWebSocket(server);
 
 // Graceful shutdown handling
 process.on('SIGTERM', () => {
-    console.log('SIGTERM signal received: closing HTTP server');
+    // console.log('SIGTERM signal received: closing HTTP server');
     server.close(() => {
-        console.log('HTTP server closed');
+        // console.log('HTTP server closed');
         process.exit(0);
     });
 });
 
 process.on('SIGINT', () => {
-    console.log('SIGINT signal received: closing HTTP server');
+    // console.log('SIGINT signal received: closing HTTP server');
     server.close(() => {
-        console.log('HTTP server closed');
+        // console.log('HTTP server closed');
         process.exit(0);
     });
 });
@@ -47,10 +47,10 @@ const PORT = process.env.PORT || 8000;
 server.listen(PORT, async () => {
     try {
         await connectDB();
-        console.log(`🚀 Server is running on port ${PORT}`);
-        console.log(`📡 WebSocket server is running on ws://localhost:${PORT}/ws`);
-        console.log(`🌐 API is available at http://localhost:${PORT}/api/v1`);
-        console.log(`🔗 Health check: http://localhost:${PORT}/`);
+        // console.log(`🚀 Server is running on port ${PORT}`);
+        // console.log(`📡 WebSocket server is running on ws://localhost:${PORT}/ws`);
+        // console.log(`🌐 API is available at http://localhost:${PORT}/api/v1`);
+        // console.log(`🔗 Health check: http://localhost:${PORT}/`);
     } catch (error) {
         console.error('Failed to start server:', error);
         process.exit(1);

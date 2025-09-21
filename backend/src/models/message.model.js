@@ -328,7 +328,7 @@ messageSchema.statics.markMessagesAsDeliveredOnUserOnline = async function (
       participants: userId,
     });
     
-    console.log(`Marking messages as delivered for user ${userId} in ${rooms.length} rooms`);
+    // console.log(`Marking messages as delivered for user ${userId} in ${rooms.length} rooms`);
     
     const result = await this.updateMany(
       {
@@ -349,7 +349,7 @@ messageSchema.statics.markMessagesAsDeliveredOnUserOnline = async function (
       }
     );
     
-    console.log(`Marked ${result.modifiedCount} messages as delivered for user ${userId}`);
+    // console.log(`Marked ${result.modifiedCount} messages as delivered for user ${userId}`);
     return result;
   } catch (error) {
     console.error("Error marking messages as delivered:", error);
@@ -385,7 +385,7 @@ messageSchema.statics.markRoomMessagesAsReadOnOpen = async function (
       },
     }
   );
-  console.log("Marked messages as read:", updateResult);
+  // console.log("Marked messages as read:", updateResult);
   return updateResult || null;
 };
 

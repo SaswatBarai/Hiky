@@ -1,8 +1,8 @@
 import nodemailer from "nodemailer";
 
 // Debug: Check if environment variables are loaded
-console.log("EMAIL_USER:", process.env.EMAIL_USER);
-console.log("EMAIL_PASSWORD:", process.env.EMAIL_PASSWORD ? "***SET***" : "NOT SET");
+// console.log("EMAIL_USER:", process.env.EMAIL_USER);
+// console.log("EMAIL_PASSWORD:", process.env.EMAIL_PASSWORD ? "***SET***" : "NOT SET");
 
 const transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
@@ -75,7 +75,7 @@ export const sendMail = async (to, subject, otp) => {
 </html>`,
     });
 
-    console.log("Email sent successfully:", info.messageId);
+    // console.log("Email sent successfully:", info.messageId);
     return { success: true, messageId: info.messageId };
 
   } catch (error) {
@@ -155,7 +155,7 @@ export const sendResetPasswordMail = async (to, resetLink) => {
 </html>`
     });
 
-    console.log("Password reset email sent successfully:", info.messageId);
+    // console.log("Password reset email sent successfully:", info.messageId);
     return { success: true, messageId: info.messageId };
 
   } catch (error) {

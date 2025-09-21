@@ -241,7 +241,7 @@ export const sendMessage = async (req, res) => {
 };
 
 export const getMessages = async (req, res) => {
-  console.log("mark 1")
+  // console.log("mark 1")
   const { roomId } = req.params;
   const { limit = 20, page = 1 } = req.query;
   const userId = req.user._id;
