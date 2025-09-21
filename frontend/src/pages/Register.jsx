@@ -36,8 +36,7 @@ const Register = ({
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const {theme} = useTheme();
-  
+
 
   return (
     <OTPProvider>
@@ -79,6 +78,9 @@ const RegisterContent = ({
   const [isOtpLoading, setIsOtpLoading] = useState(false);
   const [isResendLoading, setIsResendLoading] = useState(false);
   const [resendTimer, setResendTimer] = useState(0);
+  const {theme} = useTheme();
+  const isDark = theme === "dark";
+  
 
   // Resend timer effect
   useEffect(() => {
@@ -110,10 +112,6 @@ const RegisterContent = ({
       setIsResendLoading(false);
     }
   };
-
-
-
-
 
   
   const handleRegister = async (e) => {
