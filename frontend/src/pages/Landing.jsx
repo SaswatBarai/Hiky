@@ -39,11 +39,15 @@ export default function Landing() {
           <a className="text-sm text-muted-foreground hover:text-green-600 dark:hover:text-green-500 transition-colors" href="#how-it-works">Getting Started</a>
           <a className="text-sm text-muted-foreground hover:text-green-600 dark:hover:text-green-500 transition-colors" href="#about">About</a>
           
-          <Button size="sm" className="bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-600 text-white">Get Started</Button>
+          <Button size="sm" className="bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-600 text-white"
+          onClick={() => navigate("/login")}
+          >Get Started</Button>
         </nav>
         <div className="md:hidden flex items-center gap-2">
           <ModeToggle />
-          <Button size="sm" className="bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-600 text-white">Get Started</Button>
+          <Button size="sm" className="bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-600 text-white"
+          onClick={()=> navigate("/login")}
+          >Get Startedii</Button>
         </div>
       </header>
 

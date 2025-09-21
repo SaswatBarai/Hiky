@@ -24,6 +24,8 @@ import { useDispatch } from "react-redux";
 import {setUser} from "../state/authSlice"
 import { Spinner } from "@mynaui/icons-react";
 import { resendOTP } from "../utils/axios";
+import { cn } from "../lib/utils";
+import {useTheme} from "../components/theme-provider"
 
 
 const Register = ({
@@ -34,6 +36,8 @@ const Register = ({
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const {theme} = useTheme();
+  
 
   return (
     <OTPProvider>
@@ -309,7 +313,10 @@ const RegisterContent = ({
               type="submit" 
               onClick={handleRegister} 
               disabled={isMainLoading}  
-              className="w-full h-11 rounded-lg font-medium bg-primary hover:bg-primary/90 shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5"
+              className={cn(
+                "w-full h-11 rounded-lg font-medium bg-primary hover:bg-primary/90 shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5",
+                isDark && "bg-green-800 hover:bg-green-900 text-white"
+              )}
             >
               {isMainLoading ? (
                 <div className="flex items-center gap-2">
@@ -349,7 +356,10 @@ const RegisterContent = ({
                       size="sm"
                       onClick={handleResendOTP}
                       disabled={resendTimer > 0 || isResendLoading}
-                      className="text-primary hover:text-primary/80 hover:bg-primary/10 p-2 h-auto font-medium rounded-lg transition-all duration-200"
+                      className={cn(
+                        "text-primary hover:text-primary/80 hover:bg-primary/10 p-2 h-auto font-medium rounded-lg transition-all duration-200",
+                        
+                      )}
                     >
                       {isResendLoading ? (
                         <div className="flex items-center gap-2">

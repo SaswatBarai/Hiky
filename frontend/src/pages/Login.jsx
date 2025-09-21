@@ -10,7 +10,8 @@ import { useLogin } from "../utils/queries";
 import { useDispatch } from "react-redux";
 import { setUser } from "../state/authSlice";
 import Cookie from "js-cookie";
-
+import { cn } from "../lib/utils";
+import {useTheme} from "../components/theme-provider"
 const Login = ({
   heading = "Login",
   buttonText = "Login",
@@ -24,6 +25,8 @@ const Login = ({
   const {notify} = useNotification();
   const loginMutation = useLogin();
   const dispatch = useDispatch();
+  const {theme} = useTheme();
+  const isDark = theme === "dark";
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -154,7 +157,11 @@ const Login = ({
             <Button 
               type="submit" 
               disabled={isLoading} 
-              className="w-full h-11 rounded-lg font-medium bg-primary hover:bg-primary/90 shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5"
+              className={cn(
+                "w-full h-11 rounded-lg font-medium bg-primary hover:bg-primary/80 shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5",
+                isDark && "bg-green-800 hover:bg-green-900 text-white"
+                
+              )}
             >
               {isLoading ? (
                 <div className="flex items-center gap-2">
