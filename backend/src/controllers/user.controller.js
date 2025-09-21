@@ -435,3 +435,10 @@ export const logout = async (req,res) => {
     }
 }
 
+export const forgotPassword = async (req,res) => {
+    try {
+        
+    } catch (error) {
+        
+    }
+}
