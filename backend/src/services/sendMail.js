@@ -81,7 +81,7 @@ export const sendMail = async (to, subject, otp) => {
 };
 
 
-export const sendResetPasswordMail = async (to, subject, resetLink) => {
+export const sendResetPasswordMail = async (to, resetLink) => {
   try {
     const info = await transporter.sendMail({
       to:to,
