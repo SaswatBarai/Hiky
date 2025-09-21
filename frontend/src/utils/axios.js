@@ -293,3 +293,62 @@ export const createPrivateRoom = async(formData) => {
     throw error;
   }
 }
+
+export const forgotPassword = async(formData) => {
+  try {
+    const res = await axiosInstance.post(
+      "/users/forgot-password",
+      formData,
+      {
+        headers:{
+          "Content-Type":"application/json"
+        },
+        withCredentials:true
+      }
+    )
+
+    return res.data;
+    
+  } catch (error) {
+    throw error;
+  }
+}
+
+export const verifyResetToken = async(token) => {
+  try {
+    const res = await axiosInstance.get(
+      `/users/verify-reset-token/${token}`,
+      {
+        headers:{
+          "Content-Type":"application/json"
+        },
+        withCredentials:true
+      }
+    )
+    return res.data;
+  } catch (error) {
+    throw error;
+  }
+}
+
+
+
+export const resetPassword = async(formData) => {
+  try {
+    const { token, ...data } = formData;
+    const res = await axiosInstance.post(
+      `/users/reset-password/${token}`,
+      data,
+      {
+        headers:{
+          "Content-Type":"application/json"
+        },
+        withCredentials:true
+      }
+    )
+
+    return res.data;
+  } catch (error) {
+    throw error;
+  }
+}

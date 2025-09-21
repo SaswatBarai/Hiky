@@ -8,7 +8,8 @@ import {
     login,
     logout,
     forgotPassword,
-    verifyresetPasswordToken
+    verifyResetPasswordToken,
+    resetPassword
 } from "../controllers/user.controller.js"
 import { upload } from '../middleware/multer.middleware.js';
 import {authMiddleware} from "../middleware/auth.middleware.js"
@@ -23,6 +24,7 @@ import {
     resetPasswordSchema,
     resetPasswordTokenSchema
 } from '../validation/user.validation.js';
+import {forgotPasswordLimiter} from "../rateLimits/limit.js"
 
 const router = Router();
 
@@ -36,8 +38,10 @@ router.post("/register", validateSchema(registerSchema), register)
 router.post("/login", validateSchema(loginSchema), login);
 router.post("/verify-email", validateSchema(verifyEmailSchema), verifyEmail)
 router.post("/resent-otp", validateSchema(resendOTPSchema), resentOTP)
-router.post("/forgot-password", validateSchema(forgotPasswordSchema), forgotPassword)
-router.post("/reset-password/:token", validateSchema(resetPasswordTokenSchema, 'params'), validateSchema(resetPasswordSchema), verifyresetPasswordToken)
+
+router.post("/forgot-password",forgotPasswordLimiter, validateSchema(forgotPasswordSchema), forgotPassword)
+router.get("/verify-reset-token/:token", validateSchema(resetPasswordTokenSchema, 'params'), verifyResetPasswordToken)
+router.post("/reset-password/:token", validateSchema(resetPasswordTokenSchema, 'params'), validateSchema(resetPasswordSchema), resetPassword)
 
 //Auth Routes 
 router.post("/profile-uploader", authMiddleware, upload.single("profileImage"), validateSchema(profileUploaderSchema), profileUploader);

@@ -1,5 +1,9 @@
 import nodemailer from "nodemailer";
 
+// Debug: Check if environment variables are loaded
+console.log("EMAIL_USER:", process.env.EMAIL_USER);
+console.log("EMAIL_PASSWORD:", process.env.EMAIL_PASSWORD ? "***SET***" : "NOT SET");
+
 const transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
   port: 465,

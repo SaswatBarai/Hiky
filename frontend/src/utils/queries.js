@@ -12,7 +12,10 @@ import {
   searchUsers,
   deleteRoom,
   markMessagesAsRead,
-  createPrivateRoom
+  createPrivateRoom,
+  forgotPassword,
+  verifyResetToken,
+  resetPassword
 } from "../utils/axios.js";
 
 export const useRegister = () => {
@@ -21,12 +24,13 @@ export const useRegister = () => {
   });
 };
 
-export const useGetUser = () => {
+export const useGetUser = (enabled = false) => {
   return useQuery({
     queryKey: ["getUser"],
     queryFn: getUser,
     staleTime: 1000 * 60 * 5,
     gcTime: 1000 * 60 * 10,
+    enabled, // Conditionally enable based on parameter
   });
 };
 
@@ -169,5 +173,27 @@ export const useCreatePrivateRoom = () => {
         queryKey:["getRooms"]
       })
     }
+  })
+}
+
+
+export const useForgotPassword = () => {
+  return useMutation({
+    mutationFn: forgotPassword
+  })
+}
+
+//get req
+export const useVerifyResetToken = (token) => {
+  return useQuery({
+    queryKey: ["verifyResetToken", token],
+    queryFn: () => verifyResetToken(token),
+    enabled: !!token, // Only run the query if token exists
+  })
+}
+
+export const useResetPassword = () => {
+  return useMutation({
+    mutationFn: resetPassword,
   })
 }

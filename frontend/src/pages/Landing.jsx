@@ -1,7 +1,6 @@
 import React from 'react';
 import { HikyLogo } from '@/components/hiky-logo';
 import { Button } from '@/components/ui/button';
-import { ModeToggle } from '@/components/mode-toggle';
 import { cn } from '@/lib/utils';
 import {
   MessageSquare,
@@ -44,10 +43,9 @@ export default function Landing() {
           >Get Started</Button>
         </nav>
         <div className="md:hidden flex items-center gap-2">
-          <ModeToggle />
           <Button size="sm" className="bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-600 text-white"
           onClick={()=> navigate("/login")}
-          >Get Startedii</Button>
+          >Get Started</Button>
         </div>
       </header>
 

@@ -462,7 +462,7 @@ export const forgotPassword = async (req,res) => {
         const rawToken = crypto.randomBytes(32).toString("hex");
         const hashedToken = crypto.createHash("sha256").update(rawToken).digest("hex");
         await redisClient.setex(`reset:${hashedToken}`,900,user?.email);
-        const resetLink = `${process.env.FRONTEND_URL}/reset-password?token=${rawToken}`;
+        const resetLink = `${process.env.FRONTEND_URL}/reset-password/${rawToken}`;
         const result = await sendResetPasswordMail(user.email,resetLink);
         if(!result.success){
             return res.status(500).json({
@@ -484,69 +484,87 @@ export const forgotPassword = async (req,res) => {
 }
 
 
-export const verifyresetPasswordToken = async (req,res) => {
+//we will only verify the token
+export const verifyResetPasswordToken = async (req,res) => {
     try {
         const {token} = req.params;
-        const {newPassword} = req.body;
         if(!token){
             return res.status(400).json({
                 success: false,
-                message: "Invalid or missing token"
+                message: "Token is required"
             });
         }
-
-        if(!newPassword){
-            return res.status(400).json({
-                success: false,
-                message: "Please provide a new password"
-            });
-        }
-
-        // Validate password strength
-        if(newPassword.length < 6){
-            return res.status(400).json({
-                success: false,
-                message: "Password must be at least 6 characters long"
-            });
-        }
-
-        if(!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{6,}$/.test(newPassword)){
-            return res.status(400).json({
-                success: false,
-                message: "Password must contain at least one uppercase letter, one lowercase letter, and one number"
-            });
-        }
-
         const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+        console.log("hashedToken",hashedToken)
         const email = await redisClient.get(`reset:${hashedToken}`);
+        console.log(email)
         if(!email){
             return res.status(400).json({
                 success: false,
-                message: "Invalid or expired token"
+                message: "Invalid token or token expired 1"
             });
         }
-        const user = await User.findOne({email}).select("+password +refreshToken");
+        const user = await User.findOne({email});
         if(!user){
             return res.status(404).json({
                 success: false,
-                message: "User not found"
+                message: "Invalid token or token expired 2"
             });
         }
-        user.password = newPassword;
-        user.refreshToken = "";
-        await user.save();
-        await redisClient.del(`reset:${hashedToken}`);
-        await redisClient.del(`user:${user._id}`);
         return res.status(200).json({
             success: true,
-            message: "Password reset successfully"
+            message: "Token verified successfully",
+            email: email
         });
-
     } catch (error) {
         return res.status(500).json({
             success: false,
             message: "Internal Server Error"
         });
+    }
+}
+
+
+//now we will reset the password with the token
+export const resetPassword = async (req,res) => {
+    try {
+        const {token} = req.params;
+        const {newPassword} = req.body;
+        if(!token || !newPassword){
+            return res.status(400).json({
+                success: false,
+                message: "Please provide all required fields"
+            });
+        }
+        const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+        const email = await redisClient.get(`reset:${hashedToken}`);
+        if(!email){
+            return res.status(400).json({
+                success: false,
+                message: "Invalid token or token expired"
+            });
+        }
+        const user = await User.findOne({email});
+        if(!user){
+            return res.status(404).json({
+                success: false,
+                message: "Invalid token or token expired"
+            });
+        }
+        await redisClient.del(`reset:${hashedToken}`);
         
+        // Update password and trigger pre-save middleware for hashing
+        user.password = newPassword;
+        await user.save();
+        
+        return res.status(200).json({
+            success: true,
+            message: "Password reset successfully"
+        });
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: "Internal Server Error"
+        });
     }
 }
