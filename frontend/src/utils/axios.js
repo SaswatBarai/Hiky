@@ -176,6 +176,7 @@ export const getMessages = async(roomId, page = 1, limit = 20) => {
       }
     )
 
+    console.table("message of room",res.data);
     return res.data;
   } catch (error) {
     throw error;

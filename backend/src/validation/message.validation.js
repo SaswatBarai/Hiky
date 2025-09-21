@@ -49,15 +49,19 @@ export const getMessagesParamsSchema = z.object({
 
 export const getMessagesQuerySchema = z.object({
     limit: z.string()
-        .regex(/^\d+$/, "Limit must be a number")
-        .transform(Number)
-        .refine((val) => val > 0 && val <= 100, "Limit must be between 1 and 100")
-        .default("20"),
+        .optional()
+        .transform((val) => val ? parseInt(val, 10) : 20)
+        .refine((val) => !isNaN(val) && val >= 1 && val <= 100, "Limit must be a number between 1 and 100"),
     page: z.string()
-        .regex(/^\d+$/, "Page must be a number")
-        .transform(Number)
-        .refine((val) => val > 0, "Page must be greater than 0")
-        .default("1")
+        .optional()
+        .transform((val) => val ? parseInt(val, 10) : 1)
+        .refine((val) => !isNaN(val) && val >= 1, "Page must be a number greater than 0")
+});
+
+// Combined schema for routes that need both params and query validation
+export const getMessagesFullSchema = z.object({
+    params: getMessagesParamsSchema,
+    query: getMessagesQuerySchema
 });
 
 

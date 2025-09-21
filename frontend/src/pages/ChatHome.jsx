@@ -226,6 +226,8 @@ function ChatHome() {
     isLoading: isMessagesLoading,
   } = useGetMessagesInfinite(selectedChat, !!selectedChat);
 
+  console.log("Chat state:", { selectedChat, messageData, isMessagesLoading });
+
   // Optimized room join/leave logic
   useEffect(() => {
     if (!selectedChat || !isConnected) return;
@@ -288,6 +290,8 @@ function ChatHome() {
   useEffect(() => {
     if (!messageData) return;
 
+    console.log("Processing messageData:", messageData);
+
     const container = messagesContainerRef.current;
     if (!container) return;
 
@@ -335,6 +339,7 @@ function ChatHome() {
         }))
         .sort((a, b) => new Date(a.timeStr) - new Date(b.timeStr));
 
+      console.log("Processed messages:", allMessages);
       setMessages(allMessages);
 
       // Restore scroll position after DOM updates
@@ -1007,6 +1012,7 @@ function ChatHome() {
                 </div>
               ) : (
                 messages.map((message, index) => {
+                  console.log("Rendering message:", message);
                   const isMe = message.sender === "me";
                   const prevMessage = messages[index - 1];
                   const showAvatar =
