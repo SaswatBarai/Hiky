@@ -2,6 +2,11 @@ import User from "../models/user.model.js"
 import {redisClient} from "../config/connectRedis.js";
 import sendMail from "../services/sendMail.js"
 import {uploadImage} from "../services/cloudinary.js"
+import {sendResetPasswordMail} from "../services/sendMail.js"
+import crypto from "crypto"
+import dotenv from "dotenv"
+dotenv.config();
+
 
 
 export const register = async (req,res) => {
@@ -437,8 +442,111 @@ export const logout = async (req,res) => {
 
 export const forgotPassword = async (req,res) => {
     try {
+        const {email} = req.body;
+        if(!email){
+            return res.status(400).json({
+                success: false,
+                message: "Please provide an email address"
+            });
+        }
+        const user = await User.findOne({
+            email
+        });
+        if(!user){
+            return res.status(404).json({
+                success: false,
+                message: "User not found"
+            });
+        }
+
+        const rawToken = crypto.randomBytes(32).toString("hex");
+        const hashedToken = crypto.createHash("sha256").update(rawToken).digest("hex");
+        await redisClient.setex(`reset:${hashedToken}`,900,user?.email);
+        const resetLink = `${process.env.FRONTEND_URL}/reset-password?token=${rawToken}`;
+        const result = await sendResetPasswordMail(user.email,resetLink);
+        if(!result.success){
+            return res.status(500).json({
+                success: false,
+                message: "Failed to send reset password email"
+            });
+        }
+        return res.status(200).json({
+            success: true,
+            message: "Reset password email sent successfully"
+        });
         
     } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: "Internal Server Error"
+        });
+    }
+}
+
+
+export const verifyresetPasswordToken = async (req,res) => {
+    try {
+        const {token} = req.params;
+        if(!token){
+            return res.status(400).json({
+                success: false,
+                message: "Invalid or missing token"
+            });
+        }
+
+        const {newPassword} = req.body;
+        if(!newPassword){
+            return res.status(400).json({
+                success: false,
+                message: "Please provide a new password"
+            });
+        }
+
+        // Validate password strength
+        if(newPassword.length < 6){
+            return res.status(400).json({
+                success: false,
+                message: "Password must be at least 6 characters long"
+            });
+        }
+
+        if(!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{6,}$/.test(newPassword)){
+            return res.status(400).json({
+                success: false,
+                message: "Password must contain at least one uppercase letter, one lowercase letter, and one number"
+            });
+        }
+
+        const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+        const email = await redisClient.get(`reset:${hashedToken}`);
+        if(!email){
+            return res.status(400).json({
+                success: false,
+                message: "Invalid or expired token"
+            });
+        }
+        const user = await User.findOne({email}).select("+password +refreshToken");
+        if(!user){
+            return res.status(404).json({
+                success: false,
+                message: "User not found"
+            });
+        }
+        user.password = newPassword;
+        user.refreshToken = "";
+        await user.save();
+        await redisClient.del(`reset:${hashedToken}`);
+        await redisClient.del(`user:${user._id}`);
+        return res.status(200).json({
+            success: true,
+            message: "Password reset successfully"
+        });
+
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: "Internal Server Error"
+        });
         
     }
 }
