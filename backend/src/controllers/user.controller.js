@@ -427,11 +427,13 @@ export const logout = async (req,res) => {
         user.refreshToken = "";
         await user.save();
         await redisClient.del(`user:${user._id}`);
+        res.clearCookie("accessToken");
 
         return res.clearCookie("refreshToken").status(200).json({
             success: true,
             message: "User logged out successfully"
         });
+
     } catch (error) {
         return res.status(500).json({
             success: false,
