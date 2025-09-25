@@ -25,6 +25,7 @@ import { useSelector } from "react-redux";
 
 // UI Components
 import { FullScreenSpinner } from "@/components/ui/spinner";
+import Setting from "./pages/Setting";
 
 function App() {
   const { user, isLoading } = useStoreuser();
@@ -105,6 +106,16 @@ function App() {
             }
           />
         </Route>
+
+        {/* Protected Settings Route */}
+        <Route
+          element={
+          
+              <Setting />
+        
+          }
+          path="/settings"
+        />
 
         {/* Catch-all route for 404 */}
         <Route element={<NotFoundPage />} path="*" />

@@ -15,7 +15,8 @@ import {
   createPrivateRoom,
   forgotPassword,
   verifyResetToken,
-  resetPassword
+  resetPassword,
+  logout
 } from "../utils/axios.js";
 
 export const useRegister = () => {
@@ -51,6 +52,12 @@ export const useLogin = () => {
     mutationFn: login,
   });
 };
+
+export const useLogout = () => {
+  return useMutation({
+    mutationFn: logout
+  })
+}
 
 
 export const usegetRooms = () => {
