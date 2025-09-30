@@ -1,6 +1,6 @@
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { AuthLoading } from "@/components/ui/loading-page";
 
 // Component to protect routes for authenticated users
@@ -34,34 +34,62 @@ import { AuthLoading } from "@/components/ui/loading-page";
 
 export const Protect = ({ children}) => {
     const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
+    const user = useSelector((state) => state.auth.user);
     const navigate = useNavigate();
+    const [isChecking, setIsChecking] = useState(true);
 
     // Check if we have a token in localStorage (indicates potential authentication)
     const hasToken = localStorage.getItem("accessToken");
     
     useEffect(() => {
-        // Only redirect if there's no token and not authenticated
-        if (!isAuthenticated && !hasToken) {
-            navigate("/login");
-        }
+        const checkAuth = async () => {
+            // Give some time for the auth state to initialize
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
+            if (!isAuthenticated && !hasToken) {
+                navigate("/login", { replace: true });
+            }
+            setIsChecking(false);
+        };
+        
+        checkAuth();
     }, [isAuthenticated, hasToken, navigate]);
 
-    // Show loading or nothing while checking authentication
-    if (!isAuthenticated && hasToken) {
+    // Show loading while checking authentication or while we have a token but not authenticated yet
+    if (isChecking || (!isAuthenticated && hasToken)) {
         return <AuthLoading text="Verifying authentication..." />;
     }
 
+    // Only render children if authenticated
     return isAuthenticated ? children : null;
 }
 
 export const Guest = ({ children}) => {
     const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
+    const user = useSelector((state) => state.auth.user);
     const navigate = useNavigate();
+    const [isChecking, setIsChecking] = useState(true);
+    
+    const hasToken = localStorage.getItem("accessToken");
+    
     useEffect(() => {
-        if (isAuthenticated) {
-            navigate("/chat");
-        }
+        const checkAuth = async () => {
+            // Give some time for the auth state to initialize
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
+            if (isAuthenticated) {
+                navigate("/chat", { replace: true });
+            }
+            setIsChecking(false);
+        };
+        
+        checkAuth();
     }, [isAuthenticated, navigate]);
+    
+    // Show loading if we're checking auth state or if we have a token (might be authenticating)
+    if (isChecking || (hasToken && !isAuthenticated)) {
+        return <AuthLoading text="Checking authentication..." />;
+    }
 
     return !isAuthenticated ? children : null;
 }

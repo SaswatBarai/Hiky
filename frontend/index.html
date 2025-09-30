@@ -5,9 +5,90 @@
     <link rel="icon" type="image/svg+xml" href="./images/logo.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Hiky - Chat App</title>
+    <style>
+      /* Immediate loading screen styles */
+      .initial-loader {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: hsl(0 0% 100%);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      }
+      
+      @media (prefers-color-scheme: dark) {
+        .initial-loader {
+          background: hsl(224 71% 4%);
+          color: hsl(213 31% 91%);
+        }
+      }
+      
+      .initial-spinner {
+        width: 48px;
+        height: 48px;
+        border: 3px solid rgba(34, 197, 94, 0.2);
+        border-top: 3px solid rgb(34, 197, 94);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-bottom: 24px;
+        box-shadow: 0 0 20px rgba(34, 197, 94, 0.3);
+      }
+      
+      .initial-text {
+        color: rgb(34, 197, 94);
+        font-size: 18px;
+        font-weight: 600;
+        animation: pulse 2s ease-in-out infinite;
+        text-shadow: 0 0 10px rgba(34, 197, 94, 0.5);
+      }
+      
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+      
+      @keyframes pulse {
+        0%, 100% { opacity: 0.8; }
+        50% { opacity: 1; }
+      }
+      
+      /* Hide the loader once React takes over */
+      .initial-loader {
+        transition: opacity 0.2s ease-out;
+      }
+      
+      .react-loaded .initial-loader {
+        opacity: 0;
+        pointer-events: none;
+      }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <!-- Immediate loading screen that shows before React loads -->
+      <div class="initial-loader" id="initial-loader">
+        <div class="initial-spinner"></div>
+        <div class="initial-text">Loading Hiky...</div>
+      </div>
+    </div>
     <script type="module" src="/src/main.jsx"></script>
+    
+    <!-- Fallback script in case React doesn't load -->
+    <script>
+      // Hide the initial loader if React doesn't load within 10 seconds
+      setTimeout(function() {
+        const initialLoader = document.getElementById('initial-loader');
+        if (initialLoader && !document.body.classList.contains('react-loaded')) {
+          console.warn('React took too long to load, showing fallback');
+          initialLoader.innerHTML = '<div class="initial-spinner"></div><div class="initial-text">Loading taking longer than expected... Please refresh the page.</div>';
+        }
+      }, 10000);
+    </script>
   </body>
 </html>
