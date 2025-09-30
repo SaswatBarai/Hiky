@@ -77,10 +77,13 @@ export default function Landing() {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
-      className="min-h-screen bg-gradient-to-b from-background via-background to-green-50/30 dark:from-background dark:via-background dark:to-muted/20 text-foreground"
+      className="min-h-screen bg-gradient-to-b from-slate-50 via-gray-50 to-green-50/50 dark:from-background dark:via-background dark:to-muted/20 text-foreground"
     >
       {/* Background Effects */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_10%_20%,rgba(16,185,129,0.03),transparent_20%),radial-gradient(circle_at_90%_80%,rgba(34,197,94,0.02),transparent_20%),radial-gradient(circle_at_50%_50%,rgba(22,163,74,0.02),transparent_30%)] dark:bg-[radial-gradient(circle_at_10%_20%,rgba(16,185,129,0.08),transparent_20%),radial-gradient(circle_at_90%_80%,rgba(34,197,94,0.06),transparent_20%),radial-gradient(circle_at_50%_50%,rgba(22,163,74,0.05),transparent_30%)] pointer-events-none" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_10%_20%,rgba(16,185,129,0.06),transparent_25%),radial-gradient(circle_at_90%_80%,rgba(34,197,94,0.05),transparent_25%),radial-gradient(circle_at_50%_50%,rgba(22,163,74,0.04),transparent_35%)] dark:bg-[radial-gradient(circle_at_10%_20%,rgba(16,185,129,0.08),transparent_20%),radial-gradient(circle_at_90%_80%,rgba(34,197,94,0.06),transparent_20%),radial-gradient(circle_at_50%_50%,rgba(22,163,74,0.05),transparent_30%)] pointer-events-none" />
+      
+      {/* Light mode comfort overlay - subtle tint for eye comfort */}
+      <div className="absolute inset-0 bg-gradient-to-b from-gray-100/20 via-slate-50/10 to-transparent dark:hidden pointer-events-none" />
 
       {/* Header */}
       <motion.header 
@@ -169,7 +172,7 @@ export default function Landing() {
         >
           <motion.div 
             variants={itemVariants}
-            className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-full bg-green-100 dark:bg-green-600/20 border border-green-200 dark:border-green-600/30 mb-6 sm:mb-8"
+            className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-full bg-green-100 dark:bg-green-600/20 border-2 border-green-200 dark:border-green-600/30 mb-6 sm:mb-8 shadow-sm"
           >
             <motion.div
               animate={{ rotate: 360 }}
@@ -322,15 +325,15 @@ export default function Landing() {
         >
           <motion.div 
             variants={itemVariants}
-            className="group p-6 sm:p-8 rounded-2xl bg-white/70 dark:bg-card/50 border border-green-100 dark:border-green-900/20 hover:border-green-300 dark:hover:border-green-600/40 transition-all duration-300"
+            className="group p-6 sm:p-8 rounded-2xl bg-white dark:bg-card/50 border-2 border-slate-200 dark:border-green-900/20 hover:border-green-300 dark:hover:border-green-600/40 transition-all duration-300 shadow-md hover:shadow-lg"
             whileHover={{ 
               scale: 1.03,
               y: -5,
-              boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)"
+              boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.08)"
             }}
           >
             <motion.div 
-              className="w-12 h-12 bg-green-100 dark:bg-green-600/20 rounded-lg flex items-center justify-center mb-4 sm:mb-6 group-hover:bg-green-200 dark:group-hover:bg-green-600/30 transition-colors"
+              className="w-12 h-12 bg-green-100 dark:bg-green-600/20 rounded-lg flex items-center justify-center mb-4 sm:mb-6 group-hover:bg-green-200 dark:group-hover:bg-green-600/30 transition-colors border border-green-200 dark:border-green-600/30"
               whileHover={{ rotate: 5, scale: 1.1 }}
             >
               <Shield className="w-5 sm:w-6 h-5 sm:h-6 text-green-600 dark:text-green-500" />
@@ -343,15 +346,15 @@ export default function Landing() {
 
           <motion.div 
             variants={itemVariants}
-            className="group p-6 sm:p-8 rounded-2xl bg-white/70 dark:bg-card/50 border border-green-100 dark:border-green-900/20 hover:border-green-300 dark:hover:border-green-600/40 transition-all duration-300"
+            className="group p-6 sm:p-8 rounded-2xl bg-white dark:bg-card/50 border-2 border-slate-200 dark:border-green-900/20 hover:border-green-300 dark:hover:border-green-600/40 transition-all duration-300 shadow-md hover:shadow-lg"
             whileHover={{ 
               scale: 1.03,
               y: -5,
-              boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)"
+              boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.08)"
             }}
           >
             <motion.div 
-              className="w-12 h-12 bg-green-100 dark:bg-green-600/20 rounded-lg flex items-center justify-center mb-4 sm:mb-6 group-hover:bg-green-200 dark:group-hover:bg-green-600/30 transition-colors"
+              className="w-12 h-12 bg-green-100 dark:bg-green-600/20 rounded-lg flex items-center justify-center mb-4 sm:mb-6 group-hover:bg-green-200 dark:group-hover:bg-green-600/30 transition-colors border border-green-200 dark:border-green-600/30"
               whileHover={{ rotate: 5, scale: 1.1 }}
             >
               <Zap className="w-5 sm:w-6 h-5 sm:h-6 text-green-600 dark:text-green-500" />
@@ -364,15 +367,15 @@ export default function Landing() {
 
           <motion.div 
             variants={itemVariants}
-            className="group p-6 sm:p-8 rounded-2xl bg-white/70 dark:bg-card/50 border border-green-100 dark:border-green-900/20 hover:border-green-300 dark:hover:border-green-600/40 transition-all duration-300"
+            className="group p-6 sm:p-8 rounded-2xl bg-white dark:bg-card/50 border-2 border-slate-200 dark:border-green-900/20 hover:border-green-300 dark:hover:border-green-600/40 transition-all duration-300 shadow-md hover:shadow-lg"
             whileHover={{ 
               scale: 1.03,
               y: -5,
-              boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)"
+              boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.08)"
             }}
           >
             <motion.div 
-              className="w-12 h-12 bg-green-100 dark:bg-green-600/20 rounded-lg flex items-center justify-center mb-4 sm:mb-6 group-hover:bg-green-200 dark:group-hover:bg-green-600/30 transition-colors"
+              className="w-12 h-12 bg-green-100 dark:bg-green-600/20 rounded-lg flex items-center justify-center mb-4 sm:mb-6 group-hover:bg-green-200 dark:group-hover:bg-green-600/30 transition-colors border border-green-200 dark:border-green-600/30"
               whileHover={{ rotate: 5, scale: 1.1 }}
             >
               <Users className="w-5 sm:w-6 h-5 sm:h-6 text-green-600 dark:text-green-500" />
@@ -385,15 +388,15 @@ export default function Landing() {
 
           <motion.div 
             variants={itemVariants}
-            className="group p-6 sm:p-8 rounded-2xl bg-white/70 dark:bg-card/50 border border-green-100 dark:border-green-900/20 hover:border-green-300 dark:hover:border-green-600/40 transition-all duration-300"
+            className="group p-6 sm:p-8 rounded-2xl bg-white dark:bg-card/50 border-2 border-slate-200 dark:border-green-900/20 hover:border-green-300 dark:hover:border-green-600/40 transition-all duration-300 shadow-md hover:shadow-lg"
             whileHover={{ 
               scale: 1.03,
               y: -5,
-              boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)"
+              boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.08)"
             }}
           >
             <motion.div 
-              className="w-12 h-12 bg-green-100 dark:bg-green-600/20 rounded-lg flex items-center justify-center mb-4 sm:mb-6 group-hover:bg-green-200 dark:group-hover:bg-green-600/30 transition-colors"
+              className="w-12 h-12 bg-green-100 dark:bg-green-600/20 rounded-lg flex items-center justify-center mb-4 sm:mb-6 group-hover:bg-green-200 dark:group-hover:bg-green-600/30 transition-colors border border-green-200 dark:border-green-600/30"
               whileHover={{ rotate: 5, scale: 1.1 }}
             >
               <Globe className="w-5 sm:w-6 h-5 sm:h-6 text-green-600 dark:text-green-500" />
@@ -406,15 +409,15 @@ export default function Landing() {
 
           <motion.div 
             variants={itemVariants}
-            className="group p-6 sm:p-8 rounded-2xl bg-white/70 dark:bg-card/50 border border-green-100 dark:border-green-900/20 hover:border-green-300 dark:hover:border-green-600/40 transition-all duration-300"
+            className="group p-6 sm:p-8 rounded-2xl bg-white dark:bg-card/50 border-2 border-slate-200 dark:border-green-900/20 hover:border-green-300 dark:hover:border-green-600/40 transition-all duration-300 shadow-md hover:shadow-lg"
             whileHover={{ 
               scale: 1.03,
               y: -5,
-              boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)"
+              boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.08)"
             }}
           >
             <motion.div 
-              className="w-12 h-12 bg-green-100 dark:bg-green-600/20 rounded-lg flex items-center justify-center mb-4 sm:mb-6 group-hover:bg-green-200 dark:group-hover:bg-green-600/30 transition-colors"
+              className="w-12 h-12 bg-green-100 dark:bg-green-600/20 rounded-lg flex items-center justify-center mb-4 sm:mb-6 group-hover:bg-green-200 dark:group-hover:bg-green-600/30 transition-colors border border-green-200 dark:border-green-600/30"
               whileHover={{ rotate: 5, scale: 1.1 }}
             >
               <Smartphone className="w-5 sm:w-6 h-5 sm:h-6 text-green-600 dark:text-green-500" />
@@ -427,15 +430,15 @@ export default function Landing() {
 
           <motion.div 
             variants={itemVariants}
-            className="group p-6 sm:p-8 rounded-2xl bg-white/70 dark:bg-card/50 border border-green-100 dark:border-green-900/20 hover:border-green-300 dark:hover:border-green-600/40 transition-all duration-300"
+            className="group p-6 sm:p-8 rounded-2xl bg-white dark:bg-card/50 border-2 border-slate-200 dark:border-green-900/20 hover:border-green-300 dark:hover:border-green-600/40 transition-all duration-300 shadow-md hover:shadow-lg"
             whileHover={{ 
               scale: 1.03,
               y: -5,
-              boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)"
+              boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.08)"
             }}
           >
             <motion.div 
-              className="w-12 h-12 bg-green-100 dark:bg-green-600/20 rounded-lg flex items-center justify-center mb-4 sm:mb-6 group-hover:bg-green-200 dark:group-hover:bg-green-600/30 transition-colors"
+              className="w-12 h-12 bg-green-100 dark:bg-green-600/20 rounded-lg flex items-center justify-center mb-4 sm:mb-6 group-hover:bg-green-200 dark:group-hover:bg-green-600/30 transition-colors border border-green-200 dark:border-green-600/30"
               whileHover={{ rotate: 5, scale: 1.1 }}
             >
               <HeadphonesIcon className="w-5 sm:w-6 h-5 sm:h-6 text-green-600 dark:text-green-500" />
@@ -568,7 +571,7 @@ export default function Landing() {
           </div>
 
           <div className="space-y-6">
-            <div className="p-6 bg-white/70 dark:bg-card/50 rounded-2xl border border-green-100 dark:border-green-900/20">
+            <div className="p-6 bg-white dark:bg-card/50 rounded-2xl border-2 border-slate-200 dark:border-green-900/20 shadow-md">
               <h4 className="text-lg font-semibold text-foreground dark:text-white mb-3">Technology Stack</h4>
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
@@ -590,7 +593,7 @@ export default function Landing() {
               </div>
             </div>
 
-            <div className="p-6 bg-white/70 dark:bg-card/50 rounded-2xl border border-green-100 dark:border-green-900/20">
+            <div className="p-6 bg-white dark:bg-card/50 rounded-2xl border-2 border-slate-200 dark:border-green-900/20 shadow-md">
               <h4 className="text-lg font-semibold text-foreground dark:text-white mb-3">Key Features</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li className="flex items-center gap-2">
@@ -619,7 +622,7 @@ export default function Landing() {
         </div>
 
         <div className="text-center">
-          <div className="inline-flex items-center gap-4 p-8 bg-white/70 dark:bg-card/50 rounded-2xl border border-green-100 dark:border-green-900/20">
+          <div className="inline-flex items-center gap-4 p-8 bg-white dark:bg-card/50 rounded-2xl border-2 border-slate-200 dark:border-green-900/20 shadow-md">
             <div className="text-left">
               <h4 className="text-lg font-semibold text-foreground dark:text-white mb-2">Open Source Project</h4>
               <p className="text-muted-foreground text-sm">
