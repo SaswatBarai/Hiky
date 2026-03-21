@@ -9,7 +9,8 @@ const axiosInstance = axios.create({
 
 axiosInstance.interceptors.request.use(
   (config) => {
-    const accessToken = localStorage.getItem("accessToken");
+    let accessToken;
+    try { accessToken = localStorage.getItem("accessToken"); } catch {}
     if (accessToken) {
       config.headers["Authorization"] = `Bearer ${accessToken}`;
     }
