@@ -12,11 +12,22 @@ app.use(helmet({
     contentSecurityPolicy: false, // Disable CSP for WebSocket connections
 }));
 
+const allowedOrigins = [
+    "http://localhost:5173",
+    "http://localhost:5174",
+    ...(process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split(",").map(url => url.trim()) : []),
+];
+
 app.use(cors({
-    origin: process.env.FRONTEND_URL ? 
-        [process.env.FRONTEND_URL, "http://localhost:5173", "http://localhost:5174"] : 
-        ["http://localhost:5173", "http://localhost:5174"],
-    credentials: true
+    origin: (origin, callback) => {
+        // Allow requests with no origin (mobile apps, curl, Postman, etc.)
+        if (!origin) return callback(null, true);
+        if (allowedOrigins.includes(origin)) return callback(null, true);
+        // Allow any Vercel preview deployment URLs for the project
+        if (process.env.VERCEL_PROJECT && origin.endsWith(".vercel.app")) return callback(null, true);
+        callback(new Error(`CORS: origin ${origin} not allowed`));
+    },
+    credentials: true,
 }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
