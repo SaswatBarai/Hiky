@@ -38,8 +38,7 @@ export const Protect = ({ children}) => {
     const navigate = useNavigate();
     const [isChecking, setIsChecking] = useState(true);
 
-    // Check if we have a token in localStorage (indicates potential authentication)
-    const hasToken = localStorage.getItem("accessToken");
+    const hasToken = (() => { try { return localStorage.getItem("accessToken"); } catch { return null; } })();
     
     useEffect(() => {
         const checkAuth = async () => {
@@ -70,7 +69,7 @@ export const Guest = ({ children}) => {
     const navigate = useNavigate();
     const [isChecking, setIsChecking] = useState(true);
     
-    const hasToken = localStorage.getItem("accessToken");
+    const hasToken = (() => { try { return localStorage.getItem("accessToken"); } catch { return null; } })();
     
     useEffect(() => {
         const checkAuth = async () => {

@@ -1,5 +1,4 @@
 import axios from 'axios';
-import {CookieStorage} from "cookie-storage"
 
 
 const axiosInstance = axios.create({
@@ -158,7 +157,6 @@ export const logout = async() => {
     )
 
     localStorage.removeItem("accessToken");
-    CookieStorage.removeItem("accessToken");
     
 
     return res.data;
